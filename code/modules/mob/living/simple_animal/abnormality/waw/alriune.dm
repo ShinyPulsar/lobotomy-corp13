@@ -26,10 +26,20 @@
 	)
 	work_damage_amount = 10
 	work_damage_type = WHITE_DAMAGE
+	good_hater = TRUE
 
 	light_color = COLOR_PINK
 	light_range = 9
 	light_power = 1
+
+	observation_prompt = "You told me, shedding petals instead of tears. <br>\
+		\"We were all nothing but soil once, so do not speak of an end here.\" <br>\
+		You told me, blossoming flowers from body as if they are your last words. <br>\"Soon...\""
+	observation_choices = list(
+		"Spring will come" = list(TRUE, "Spring is coming. <br>Slowly, rapturously, my end began."),
+		"Winter will come" = list(TRUE, "Winter is coming. <br>\
+			Gradually, my exipation was drawing to an end hectically."),
+	)
 
 	/// Currently displayed petals. When value is at 3 - reset to 0 and perform attack
 	var/petals_current = 0
@@ -81,7 +91,7 @@
 					continue
 				if(L.stat == DEAD)
 					continue
-				L.apply_damage(pulse_damage, WHITE_DAMAGE, null, L.run_armor_check(null, WHITE_DAMAGE))
+				L.deal_damage(pulse_damage, WHITE_DAMAGE)
 				new /obj/effect/temp_visual/alriune_attack(get_turf(L))
 				if(ishuman(L))
 					var/mob/living/carbon/human/H = L

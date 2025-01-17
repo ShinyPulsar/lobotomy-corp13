@@ -2056,10 +2056,10 @@
 		else if(response.status_code != 200)
 			dat += "<br>Failed to connect to CentCom. Status code: [response.status_code]"
 		else
-			if(response.body == "[]")
+			if(response.body == "\[]")
 				dat += "<center><b>0 bans detected for [ckey]</b></center>"
 			else
-				bans = json_decode(response["body"])
+				bans = json_decode(response.body)
 
 				//Ignore bans from non-whitelisted sources, if a whitelist exists
 				var/list/valid_sources
@@ -2286,9 +2286,17 @@
 			to_chat(usr, "<span class='warning'>The round must be in progress to use this!</span>")
 			return
 		var/mob/heart_recepient = locate(href_list["admincommend"])
-		if(tgui_alert(usr, "Are you sure you'd like to anonymously commend [heart_recepient.ckey]? NOTE: This is logged, please use this sparingly and only for actual kind behavior, not as a reward for your friends.", "<3?", list("Yes", "No")) == "No")
+		if(!heart_recepient?.ckey)
+			to_chat(usr, "<span class='warning'>This mob either no longer exists or no longer is being controlled by someone!</span>")
 			return
-		usr.nominate_heart(heart_recepient)
+
+		switch(tgui_alert(usr, "Would you like the effects to apply immediately or at the end of the round? Applying them now will make it clear it was an admin commendation.", "<3?", list("Apply now", "Apply at round end", "Cancel")))
+			if("Apply now")
+				usr.nominate_heart(heart_recepient, instant = TRUE)
+			if("Apply at round end")
+				usr.nominate_heart(heart_recepient)
+			else
+				return
 
 	else if(href_list["force_war"])
 		if(!check_rights(R_ADMIN))

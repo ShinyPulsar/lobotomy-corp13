@@ -14,6 +14,7 @@ Defeating the murderer also surpresses the abnormality.
 	faction = list("hostile")
 	threat_level = WAW_LEVEL
 	start_qliphoth = 2
+	blood_volume = 0
 	work_chances = list(
 		"Nutrition" = 35,
 		"Cleanliness" = 35,
@@ -38,6 +39,13 @@ Defeating the murderer also surpresses the abnormality.
 	)
 	gift_type = /datum/ego_gifts/scene
 	abnormality_origin = ABNORMALITY_ORIGIN_ARTBOOK //Technically it was in the beta but I dont want it showing it up in LC-only modes
+
+	observation_prompt = "The play started long ago. Here is the man who killed many. And you are holding a gun."
+	observation_choices = list( //TODO: multiple texts
+		"Shoot the man" = list(TRUE, "Whether you shoot or not, the play ends with tragedy."),
+		"Wait and see" = list(TRUE, "Whether you shoot or not, the play ends with tragedy."),
+		"Shoot someone else" = list(TRUE, "Whether you shoot or not, the play ends with tragedy."),
+	)
 
 	pet_bonus = "shuffles" //saves a few lines of code by allowing funpet() to be called by attack_hand()
 	var/mob/living/simple_animal/hostile/actor/A
@@ -305,12 +313,12 @@ Defeating the murderer also surpresses the abnormality.
 	if(LAZYLEN(priority))
 		return pick(priority)
 
-/mob/living/simple_animal/hostile/actor/AttackingTarget()
+/mob/living/simple_animal/hostile/actor/AttackingTarget(atom/attacked_target)
 	. = ..()
-	if(!ishuman(target))
+	if(!ishuman(attacked_target))
 		return
 
-	var/mob/living/carbon/human/H = target
+	var/mob/living/carbon/human/H = attacked_target
 	if(!H.sanity_lost)
 		return
 
@@ -363,7 +371,7 @@ Defeating the murderer also surpresses the abnormality.
 		for(var/mob/living/carbon/human/H in view(7, human_pawn))
 			if(HAS_TRAIT(H, TRAIT_COMBATFEAR_IMMUNE))
 				continue
-			H.apply_damage(sanity_damage, WHITE_DAMAGE, null, H.run_armor_check(null, WHITE_DAMAGE))
+			H.deal_damage(sanity_damage, WHITE_DAMAGE)
 
 
 #undef STATUS_EFFECT_ACTOR

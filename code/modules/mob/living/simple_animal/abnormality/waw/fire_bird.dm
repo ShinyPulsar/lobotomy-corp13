@@ -24,6 +24,7 @@
 	)
 	work_damage_amount = 10
 	work_damage_type = RED_DAMAGE
+	good_hater = TRUE
 	faction = list("hostile", "neutral")
 	can_breach = TRUE
 	start_qliphoth = 3
@@ -31,12 +32,28 @@
 	light_color = COLOR_LIGHT_ORANGE
 	light_range = 0
 	light_power = 0
-	loot = list(/obj/item/gun/ego_gun/feather)
+	loot = list(/obj/item/ego_weapon/ranged/feather)
 	ego_list = list(/datum/ego_datum/armor/feather)
 	gift_type = /datum/ego_gifts/feather
 	abnormality_origin = ABNORMALITY_ORIGIN_LOBOTOMY
 	friendly_verb_continuous = "grazes"
 	friendly_verb_simple = "grazes"
+
+	observation_prompt = "You can only hunt it wearing a thick blindfold, but even through the fabric you can track it by the light that manages to seep through and by the heat it radiates. <br>\
+		In your hands you carry a bow nocked with an arrow, it's your last one. <br>\
+		You've been pursuing your prey for days, you..."
+	observation_choices = list(
+		"Do nothing" = list(TRUE, "You watch and wait as the light and heat pass until only cold and darkness reign in the forest. <br>\
+			Feeling safe, you remove your blindfold and find on the ground one of its radiant feathers. <br>\
+			Bravo brave hunter, have you found what you were seeking?"),
+		"Take off your blindfold" = list(TRUE, "Your curiosity gets the better of you. <br>\
+			The sight of a mythological bird that no one has seen before is a prize no hunter has claimed. <br>\
+			Steeling yourself, you remove the blindfold and immediately your vision is seared by the intensity of the light but you will yourself through the pain to catch a glimpse of what has long evaded every hunter's sight. <br>\
+			The bird offers a tear for your efforts. <br>\
+			Though your eyes may never recover, you have done what no hunter has dared to accomplish - captured it in your sight."),
+		"Fire an arrow" = list(FALSE, "You fire an arrow at what you percieve to be the source of the light and miss entirely. <br>You return empty-handed like so many hunters before you."),
+	)
+
 	var/pulse_cooldown
 	var/pulse_cooldown_time = 1 SECONDS
 	var/pulse_damage = 10
@@ -104,7 +121,7 @@
 //Breach
 /mob/living/simple_animal/hostile/abnormality/fire_bird/BreachEffect(mob/living/carbon/human/user, breach_type)
 	. = ..()
-	loot = list(/obj/item/gun/ego_gun/feather)
+	loot = list(/obj/item/ego_weapon/ranged/feather)
 	icon_state = icon_living
 	light_range = 20
 	light_power = 20
@@ -131,7 +148,7 @@
 /mob/living/simple_animal/hostile/abnormality/fire_bird/proc/crispynugget()
 	pulse_cooldown = world.time + pulse_cooldown_time
 	for(var/mob/living/carbon/human/L in livinginview(48, src))
-		L.apply_damage(pulse_damage, RED_DAMAGE, null, L.run_armor_check(null, RED_DAMAGE), spread_damage = TRUE)
+		L.deal_damage(pulse_damage, RED_DAMAGE)
 
 /mob/living/simple_animal/hostile/abnormality/fire_bird/proc/retaliatedash()
 	if(dash_cooldown > world.time)
@@ -180,7 +197,7 @@
 			if(L in been_hit)
 				continue
 			visible_message(span_boldwarning("[src] blazes through [L]!"))
-			L.apply_damage(dash_damage, WHITE_DAMAGE, null, L.run_armor_check(null, WHITE_DAMAGE), spread_damage = TRUE)
+			L.deal_damage(dash_damage, WHITE_DAMAGE)
 			new /obj/effect/temp_visual/cleave(get_turf(L))
 			if(L.sanity_lost) // TODO: TEMPORARY AS HELL
 				L.adjustFireLoss(999)

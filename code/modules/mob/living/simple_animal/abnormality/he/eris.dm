@@ -4,6 +4,7 @@
 	icon = 'ModularTegustation/Teguicons/48x48.dmi'
 	icon_state = "eris"
 	icon_living = "eris"
+	core_icon = "eris_egg"
 	portrait = "eris"
 	maxHealth = 1100
 	health = 1100
@@ -37,8 +38,36 @@
 	)
 	gift_type =  /datum/ego_gifts/coiling
 	abnormality_origin = ABNORMALITY_ORIGIN_ORIGINAL
-	var/girlboss_level = 0
 
+	observation_prompt = "I am seated at a banquet. <br>\
+		The tablecloth is of the finest red velvet, and seated across from me is the abnormality Eris.<br>\
+		\"Well, how is it?\" <br>The monster, disguised as a human asks me. <br>\
+		There is a sweet, revolting scent in the air. <br>\
+		Raw meat and organs are piled high on the serving plates, being attacked by the occasional fly. <br>The monster in front of me dines with knife and fork.<br>\
+		A human head is on prominent display on my plate.<br> It belongs to someone who was assigned to work on \"Eris\", not too long ago.<br>\
+		\"Not hungry? Perhaps you'd like to visit my boudoir?\"<br>\
+		Vile, disgusting. <br>I want to get out of here."
+	observation_choices = list(
+		"Run" = list(TRUE, "I get up from the table, make an excuse, and bolt for the door as fast as I can. <br>\
+			Surprisingly, it's not locked. <br>I hear the imitation of a young woman's voice on my way out. <br>\
+			\"Come back soon, sweetie!\"<br> \"You're always invited to dinner, and i'll be sure to serve you one day!\""),
+		"Accept her proposal" = list(FALSE, "How bad can it be? <br>I follow Eris as she leads me into a room. <br>\
+			Hours later, Eris dines with another stranger. <br>My head is resting on that very same plate."),
+	)
+
+	var/girlboss_level = 0
+	var/can_heal = TRUE
+
+/mob/living/simple_animal/hostile/abnormality/eris/Login()
+	. = ..()
+	to_chat(src, "<h1>You are Eris, A Tank Role Abnormality.</h1><br>\
+		<b>|Humanoid Disguise|: You are only able to attack humans who only have a very low amount of health, or if they are dead.<br>\
+		If they attack a human who fulfills the above conditions, you will devor them, and gain a stack of 'Girl Boss'<br>\
+		<br>\
+		|Dine with me...|: Every second, you heal ALL targets that you can see if they are bellow half health.<br>\
+		Your healing increases depending on the amount of 'Girl Boss' you have.<br>\
+		<br>\
+		|Elegant Form|: When you are attacked by a human, deal WHITE damage to the attack. This damage is increase depending on your 'Girl Boss' stacks.</b>")
 
 //Okay, but here's the breach on death
 /mob/living/simple_animal/hostile/abnormality/eris/Initialize()
@@ -98,10 +127,10 @@
 	return FALSE
 
 /mob/living/simple_animal/hostile/abnormality/eris/AttackingTarget(atom/attacked_target)
-	if(ishuman(target))
-		var/mob/living/H = target
+	if(ishuman(attacked_target))
+		var/mob/living/H = attacked_target
 		if(H.stat >= SOFT_CRIT)
-			Dine(target)
+			Dine(attacked_target)
 			return
 	..()
 
@@ -118,7 +147,7 @@
 
 	//Lose sanity
 	for(var/mob/living/carbon/human/H in view(10, get_turf(src)))
-		H.apply_damage(girlboss_level*10, WHITE_DAMAGE, null, H.run_armor_check(null, WHITE_DAMAGE), spread_damage = TRUE)
+		H.deal_damage(girlboss_level*10, WHITE_DAMAGE)
 
 	SLEEP_CHECK_DEATH(10)
 	manual_emote("wipes her mouth with a hankerchief")
@@ -163,12 +192,17 @@
 //Okay, but here's the math
 /mob/living/simple_animal/hostile/abnormality/eris/proc/healpulse()
 	for(var/mob/living/H in view(10, get_turf(src)))
+		can_heal = TRUE
 		if(H.stat >= SOFT_CRIT)
 			continue
 		//Shamelessly fucking stolen from risk of rain's teddy bear. Maxes out at 20.
-		var/healamount = 20 * (TOUGHER_TIMES(girlboss_level))
-		H.adjustBruteLoss(-healamount)	//Healing for those around.
-		new /obj/effect/temp_visual/heal(get_turf(H), "#FF4444")
+		if(SSmaptype.maptype == "rcorp")
+			if(H.health > H.maxHealth*0.5)
+				can_heal = FALSE
+		if (can_heal == TRUE)
+			var/healamount = 20 * (TOUGHER_TIMES(girlboss_level))
+			H.adjustBruteLoss(-healamount)	//Healing for those around.
+			new /obj/effect/temp_visual/heal(get_turf(H), "#FF4444")
 
 //Okay but here's the defensive options
 /mob/living/simple_animal/hostile/abnormality/eris/bullet_act(obj/projectile/Proj)
@@ -176,14 +210,14 @@
 	if(!ishuman(Proj.firer))
 		return
 	var/mob/living/carbon/human/H = Proj.firer
-	H.apply_damage(40*(TOUGHER_TIMES(girlboss_level)), WHITE_DAMAGE, null, H.run_armor_check(null, WHITE_DAMAGE), spread_damage = TRUE)
+	H.deal_damage(40*(TOUGHER_TIMES(girlboss_level)), WHITE_DAMAGE)
 
 
 /mob/living/simple_animal/hostile/abnormality/eris/attacked_by(obj/item/I, mob/living/user)
 	..()
 	if(!user)
 		return
-	user.apply_damage(40*(TOUGHER_TIMES(girlboss_level)), WHITE_DAMAGE, null, user.run_armor_check(null, WHITE_DAMAGE), spread_damage = TRUE)
+	user.deal_damage(40*(TOUGHER_TIMES(girlboss_level)), WHITE_DAMAGE)
 
 
 //Okay, but here's the work effects

@@ -17,9 +17,9 @@ GLOBAL_LIST_INIT(l3squads, list("Axe", "Buckler", "Cleaver"))
 	outfit = /datum/outfit/job/wcorpl3
 	display_order = 2
 
-
 	access = list() //add accesses as necessary
 	minimal_access = list()
+	departments = DEPARTMENT_COMMAND | DEPARTMENT_W_CORP
 
 	roundstart_attributes = list(
 		FORTITUDE_ATTRIBUTE = 100,
@@ -83,12 +83,12 @@ GLOBAL_LIST_INIT(l3squads, list("Axe", "Buckler", "Cleaver"))
 /datum/outfit/job/wcorpl3/post_equip(mob/living/carbon/human/outfit_owner, visualsOnly = FALSE)
 	..()
 	var/belt = pick(
-		/obj/item/ego_weapon/city/charge/wcorp/fist,
-		/obj/item/ego_weapon/city/charge/wcorp/axe,
-		/obj/item/ego_weapon/city/charge/wcorp/spear,
-		/obj/item/ego_weapon/city/charge/wcorp/dagger,
-		/obj/item/ego_weapon/city/charge/wcorp/hatchet,
-		/obj/item/ego_weapon/city/charge/wcorp/hammer,
+		/obj/item/ego_weapon/city/wcorp/fist,
+		/obj/item/ego_weapon/city/wcorp/axe,
+		/obj/item/ego_weapon/city/wcorp/spear,
+		/obj/item/ego_weapon/city/wcorp/dagger,
+		/obj/item/ego_weapon/city/wcorp/hatchet,
+		/obj/item/ego_weapon/city/wcorp/hammer,
 	)
 
 	outfit_owner.equip_to_slot_or_del(new belt(outfit_owner),ITEM_SLOT_BELT, TRUE)

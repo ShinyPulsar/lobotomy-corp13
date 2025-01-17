@@ -30,6 +30,7 @@
 	var/maxSanity = 100
 	///When the mob enters hard critical state and is fully incapacitated.
 	var/hardcrit_threshold = HEALTH_THRESHOLD_FULLCRIT
+	var/death_threshold = HEALTH_THRESHOLD_DEAD
 
 	//Damage dealing vars! These are meaningless outside of specific instances where it's checked and defined.
 	// Lower bound of damage done by unarmed melee attacks. Mob code is a mess, only works where this is checked for.
@@ -78,7 +79,8 @@
 
 	var/cameraFollow = null
 
-	var/tod = null /// Time of death
+	/// Time of death
+	var/tod = null
 
 	var/on_fire = FALSE ///The "Are we on fire?" var
 	var/fire_stacks = 0 ///Tracks how many stacks of fire we have on, max is usually 20
@@ -175,3 +177,9 @@
 	var/body_position_pixel_x_offset = 0
 	///The x amount a mob's sprite should be offset due to the current position they're in
 	var/body_position_pixel_y_offset = 0
+
+	/// How much devotion to the fish gods do you have?
+	var/devotion = 0
+
+	/// Which god are you aligned with?
+	var/god_aligned = FISHGOD_NONE

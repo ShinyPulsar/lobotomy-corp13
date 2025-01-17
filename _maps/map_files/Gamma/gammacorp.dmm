@@ -155,6 +155,14 @@
 /obj/effect/turf_decal/siding/white/corner,
 /turf/closed/indestructible/reinforced,
 /area/facility_hallway/information)
+"bl" = (
+/obj/effect/turf_decal/tile/brown,
+/obj/effect/turf_decal/tile/brown{
+	dir = 1
+	},
+/obj/machinery/deepfryer,
+/turf/open/floor/plasteel/white,
+/area/department_main/training)
 "bn" = (
 /obj/structure/disposalpipe/segment,
 /turf/closed/indestructible/reinforced,
@@ -973,7 +981,7 @@
 /area/department_main/architecture)
 "hG" = (
 /obj/structure/rack,
-/obj/item/gun/ego_gun/clerk,
+/obj/item/ego_weapon/ranged/clerk,
 /turf/open/floor/carpet/royalblack,
 /area/department_main/extraction)
 "hK" = (
@@ -1321,6 +1329,7 @@
 "jI" = (
 /obj/machinery/vending/lobotomyuniform,
 /obj/effect/turf_decal/box/white,
+/obj/structure/sign/button_counter/directional/west,
 /turf/open/floor/facility/dark,
 /area/department_main/records)
 "jL" = (
@@ -2474,6 +2483,7 @@
 "qT" = (
 /obj/machinery/vending/lobotomyarmband,
 /obj/effect/turf_decal/box/white,
+/obj/structure/sign/button_counter/directional/west,
 /turf/open/floor/facility/dark,
 /area/department_main/records)
 "qU" = (
@@ -2557,7 +2567,8 @@
 /area/facility_hallway/discipline)
 "rn" = (
 /obj/machinery/door/airlock/highsecurity{
-	name = "Information Department"
+	name = "Information Department";
+	hackProof = 1
 	},
 /obj/structure/disposalpipe/segment,
 /turf/open/floor/facility/halls,
@@ -2874,14 +2885,6 @@
 	},
 /turf/open/floor/plasteel,
 /area/facility_hallway/south)
-"ti" = (
-/obj/item/kirbyplants{
-	anchored = 1;
-	icon_state = "plant-21"
-	},
-/obj/effect/turf_decal/siding/brown,
-/turf/open/floor/facility,
-/area/department_main/training)
 "tl" = (
 /obj/structure/disposalpipe/segment{
 	dir = 4
@@ -3070,7 +3073,8 @@
 /area/department_main/records)
 "ui" = (
 /obj/machinery/door/airlock/highsecurity{
-	name = "Records Office Secure Area"
+	name = "Records Office Secure Area";
+	hackProof = 1
 	},
 /turf/open/floor/carpet/black,
 /area/department_main/records)
@@ -3103,6 +3107,12 @@
 	},
 /obj/effect/turf_decal/siding{
 	color = "#7D6521";
+	dir = 1
+	},
+/turf/open/floor/carpet/royalblack,
+/area/department_main/extraction)
+"uq" = (
+/obj/machinery/computer/abnormality_logs{
 	dir = 1
 	},
 /turf/open/floor/carpet/royalblack,
@@ -3421,7 +3431,7 @@
 	desc = "A board for mounting important items upon.";
 	name = "display board"
 	},
-/obj/item/gun/ego_gun/clerk{
+/obj/item/ego_weapon/ranged/clerk{
 	anchored = 1;
 	pixel_y = 2
 	},
@@ -3835,7 +3845,8 @@
 /area/facility_hallway/south)
 "yM" = (
 /obj/machinery/door/airlock/highsecurity{
-	name = "Records Office"
+	name = "Records Office";
+	hackProof = 1
 	},
 /turf/open/floor/facility/halls,
 /area/department_main/records)
@@ -4303,8 +4314,8 @@
 /area/facility_hallway/south)
 "Cu" = (
 /obj/structure/rack,
-/obj/item/gun/ego_gun/clerk,
-/obj/item/gun/ego_gun/clerk,
+/obj/item/ego_weapon/ranged/clerk,
+/obj/item/ego_weapon/ranged/clerk,
 /turf/open/floor/plasteel/dark,
 /area/department_main/discipline)
 "Cy" = (
@@ -5507,6 +5518,10 @@
 	},
 /turf/open/floor/plasteel,
 /area/facility_hallway/command)
+"Kp" = (
+/obj/machinery/text_adventure_console,
+/turf/open/floor/carpet/royalblack,
+/area/department_main/extraction)
 "Kq" = (
 /obj/effect/turf_decal/siding/yellow{
 	dir = 9
@@ -7499,6 +7514,11 @@
 /obj/item/melee/classic_baton,
 /turf/open/floor/carpet,
 /area/department_main/control)
+"WQ" = (
+/obj/effect/turf_decal/siding/brown,
+/obj/structure/extraction_belt,
+/turf/open/floor/facility,
+/area/department_main/training)
 "WW" = (
 /obj/structure/rack,
 /obj/item/storage/box/handcuffs,
@@ -7645,6 +7665,9 @@
 /obj/effect/turf_decal/siding/brown,
 /turf/open/floor/facility,
 /area/department_main/training)
+"Yi" = (
+/turf/open/space/basic,
+/area/space)
 "Yj" = (
 /obj/structure/table/wood,
 /obj/item/toy/plush/hod,
@@ -34800,7 +34823,7 @@ kH
 tN
 NM
 MK
-ti
+zW
 Mr
 GU
 GU
@@ -35057,11 +35080,11 @@ kH
 bX
 ez
 Zl
-ZQ
+WQ
 Nv
 xR
 Oh
-uk
+bl
 uk
 uk
 Pm
@@ -36340,7 +36363,7 @@ PD
 cl
 bX
 bX
-bX
+uq
 jt
 jt
 jt
@@ -36597,7 +36620,7 @@ PD
 cl
 bX
 bX
-bX
+Kp
 jt
 PD
 PD
@@ -40775,9 +40798,9 @@ PD
 PD
 PD
 PD
-PD
-PD
-PD
+Yi
+Yi
+Yi
 PD
 PD
 PD
@@ -41031,12 +41054,12 @@ PD
 PD
 PD
 PD
-PD
-PD
-PD
-PD
-PD
-PD
+Yi
+Yi
+Yi
+Yi
+Yi
+Yi
 PD
 PD
 PD
@@ -41287,13 +41310,13 @@ PD
 PD
 PD
 PD
+Yi
+Yi
 PD
 PD
-PD
-PD
-PD
-PD
-PD
+Yi
+Yi
+Yi
 PD
 PD
 PD
@@ -41544,12 +41567,12 @@ PD
 PD
 PD
 PD
+Yi
+Yi
 PD
 PD
-PD
-PD
-PD
-PD
+Yi
+Yi
 PD
 PD
 PD
@@ -41801,13 +41824,13 @@ PD
 PD
 PD
 PD
+Yi
+Yi
 PD
 PD
-PD
-PD
-PD
-PD
-PD
+Yi
+Yi
+Yi
 PD
 PD
 PD
@@ -42059,12 +42082,12 @@ PD
 PD
 PD
 PD
-PD
-PD
-PD
-PD
-PD
-PD
+Yi
+Yi
+Yi
+Yi
+Yi
+Yi
 PD
 PD
 PD

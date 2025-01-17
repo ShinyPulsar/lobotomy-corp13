@@ -26,11 +26,14 @@
 
 	exp_requirements = 360
 	exp_type = EXP_TYPE_CREW
+	minimal_player_age = 5
 
 	outfit = /datum/outfit/job/command/extraction
 
 	access = list(ACCESS_COMMAND) // LC13:To-Do
 	minimal_access = list(ACCESS_COMMAND)
+	departments = DEPARTMENT_COMMAND
+
 	mapexclude = list("mini")
 	job_important = "You are the Extraction Officer. Your job is to manage the EGO console, Extraction purchase console, and power generation system. Your main goal is to ensure Agents are well-equipped with EGO."
 
@@ -56,7 +59,14 @@
 	jobtype = /datum/job/command
 	suit =  /obj/item/clothing/suit/armor/extraction
 
-	backpack_contents = list(/obj/item/price_tagger)
+	backpack_contents = list(
+		/obj/item/price_tagger,
+		/obj/item/extraction/delivery,
+		/obj/item/extraction/upgrade_tool,
+		/obj/item/extraction/key,
+		/obj/item/extraction/key/lock,
+		/obj/item/extraction/tool_extractor,
+	)
 
 //Records
 /datum/job/command/records
@@ -82,3 +92,8 @@
 	name = "Records Officer"
 	jobtype = /datum/job/command/records
 	suit =  /obj/item/clothing/suit/armor/records
+
+	backpack_contents = list(
+		/obj/item/portacopier,
+		/obj/item/portablepredict,
+	)

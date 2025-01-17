@@ -34,6 +34,20 @@
 		/mob/living/simple_animal/hostile/abnormality/general_b = 5,
 	)
 
+	observation_prompt = "There was one summer so hot and unpleasant. <br>Bees were busily flying around the beehive. <br>\
+		They live for the only one queen. <br>'Are they happy? Living only to work' I asked myself. <br>Then someone answered."
+	observation_choices = list(
+		"They work to survive" = list(TRUE, "They have no other option but to obey. <br>\
+			For they know that the moment they leave the queendom, only death awaits them. <br>\
+			It is years later that I found out that their unshakable loyalty is because of special pheromone which only queen can produce. <br>\
+			Everything started when I began to study that pheromone."),
+		"They work out of loyalty" = list(TRUE, "Loyalty that bees possess is a natural instinct. <br>\
+			If we find a way to control that instinct, <br>\
+			Things will change. <br>\
+			It is years later that I found out that their unshakable loyalty is because of special pheromone which only queen can produce. <br>\
+			Everything started when I began to study that pheromone."),
+	)
+
 	var/datum/looping_sound/queenbee/soundloop
 	var/breached_others = FALSE
 
@@ -43,7 +57,7 @@
 
 /mob/living/simple_animal/hostile/abnormality/queen_bee/Destroy()
 	QDEL_NULL(soundloop)
-	..()
+	return ..()
 
 /mob/living/simple_animal/hostile/abnormality/queen_bee/proc/emit_spores()
 	var/turf/target_c = get_turf(src)
@@ -54,7 +68,7 @@
 		if(prob(25))
 			new /obj/effect/temp_visual/bee_gas(T)
 		for(var/mob/living/carbon/human/H in T.contents)
-			if(prob(90))
+			if(prob(90))			//TODO: Make this based off armor
 				var/datum/disease/bee_spawn/D = new()
 				H.ForceContractDisease(D, FALSE, TRUE)
 		for(var/mob/living/simple_animal/hostile/abnormality/general_b/Y in T.contents)
@@ -64,7 +78,7 @@
 
 /mob/living/simple_animal/hostile/abnormality/queen_bee/NeutralEffect(mob/living/carbon/human/user, work_type, pe)
 	. = ..()
-	if(prob(40))
+	if(prob(10))
 		datum_reference.qliphoth_change(-1)
 	return
 
@@ -113,11 +127,11 @@
 	alpha = 25
 	animate(src, alpha = 255, transform = init_transform, time = 5)
 
-/mob/living/simple_animal/hostile/worker_bee/AttackingTarget()
+/mob/living/simple_animal/hostile/worker_bee/AttackingTarget(atom/attacked_target)
 	. = ..()
-	if(!ishuman(target))
+	if(!ishuman(attacked_target))
 		return
-	var/mob/living/carbon/human/H = target
+	var/mob/living/carbon/human/H = attacked_target
 	if(H.health <= 0)
 		var/turf/T = get_turf(H)
 		visible_message(span_danger("[src] bites hard on \the [H] as another bee appears!"))

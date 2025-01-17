@@ -11,6 +11,9 @@ Abnormality Supreme Victory - Win against reinforcements
 */
 
 GLOBAL_VAR_INIT(rcorp_wincondition, 0) //what state the game is in.
+GLOBAL_VAR_INIT(rcorp_objective_location, null)
+GLOBAL_VAR_INIT(rcorp_abno_objective_location, null)
+GLOBAL_VAR_INIT(rcorp_payload, null)
 //0 is neutral, 1 favors Rcorp and 2 favors abnos
 
 /obj/effect/landmark/objectivespawn
@@ -20,6 +23,7 @@ GLOBAL_VAR_INIT(rcorp_wincondition, 0) //what state the game is in.
 	icon_state = "city_of_cogs"
 
 /obj/effect/landmark/objectivespawn/Initialize()
+	GLOB.rcorp_objective_location = src
 	switch(GLOB.rcorp_objective)
 		if("button")
 			new /obj/structure/bough(get_turf(src))
@@ -29,7 +33,11 @@ GLOBAL_VAR_INIT(rcorp_wincondition, 0) //what state the game is in.
 		if("arbiter")
 			new /obj/structure/bough(get_turf(src))
 			addtimer(CALLBACK(src, PROC_REF(arbspawn)), 20 MINUTES)
-	..()
+		if("payload_abno")
+			new /mob/payload(get_turf(src), "abno")
+		if("payload_rcorp")
+			new /obj/effect/payload_destination(get_turf(src))
+	return ..()
 
 /obj/effect/landmark/objectivespawn/proc/reinforce()
 	minor_announce("R-Corp reinforcements are on the way. Hang on tight, commander." , "R-Corp Intelligence Office")
@@ -45,6 +53,30 @@ GLOBAL_VAR_INIT(rcorp_wincondition, 0) //what state the game is in.
 	new /obj/effect/mob_spawn/human/arbiter/rcorp(get_turf(src))
 	minor_announce("DANGER - HOSTILE ARBITER IN THE AREA. NEUTRALIZE IMMEDIATELY." , "R-Corp Intelligence Office")
 	GLOB.rcorp_wincondition = 2
+
+/obj/effect/landmark/abno_objectivespawn
+	name = "abno objective spawner"
+	desc = "It spawns the abnormality objective. Notify a coder. Thanks!"
+	icon = 'icons/effects/landmarks_static.dmi'
+	icon_state = "city_of_cogs"
+
+/obj/effect/landmark/abno_objectivespawn/Initialize()
+	GLOB.rcorp_abno_objective_location = src
+	switch(GLOB.rcorp_objective)
+		if("payload_rcorp")
+			new /mob/payload(get_turf(src), "rcorp")
+		if("payload_abno")
+			new /obj/effect/payload_destination(get_turf(src))
+	return ..()
+
+/obj/effect/payload_destination
+	name = "payload destination"
+	desc = "Payload really wants to be here"
+	icon = 'icons/effects/effects.dmi'
+	icon_state = "launchpad_pull"
+	anchored = TRUE
+	layer = ABOVE_MOB_LAYER
+	mouse_opacity = MOUSE_OPACITY_TRANSPARENT
 
 //Golden Bough Objective
 /obj/structure/bough
@@ -130,19 +162,24 @@ GLOBAL_VAR_INIT(rcorp_wincondition, 0) //what state the game is in.
 		light_on = FALSE
 		update_light()
 
-		//Round End Effects
-		SSticker.SetRoundEndSound('sound/abnormalities/donttouch/end.ogg')
-		SSticker.force_ending = 1
-		for(var/mob/M in GLOB.player_list)
-			to_chat(M, span_userdanger("[uppertext(user.real_name)] has collected the bough!"))
+		if(!SSticker.force_ending)
+			//Round End Effects
+			SSticker.SetRoundEndSound('sound/abnormalities/donttouch/end.ogg')
+			SSticker.force_ending = 1
+			for(var/mob/M in GLOB.player_list)
+				to_chat(M, span_userdanger("[uppertext(user.real_name)] has collected the bough!"))
 
-			switch(GLOB.rcorp_wincondition)
-				if(0)
-					to_chat(M, span_userdanger("R-CORP MAJOR VICTORY."))
-				if(1)
-					to_chat(M, span_userdanger("R-CORP MINOR VICTORY."))
-				if(2)
-					to_chat(M, span_userdanger("R-CORP SUPREME VICTORY."))
+				switch(GLOB.rcorp_wincondition)
+					if(0)
+						to_chat(M, span_userdanger("R-CORP MAJOR VICTORY."))
+					if(1)
+						to_chat(M, span_userdanger("R-CORP MINOR VICTORY."))
+					if(2)
+						to_chat(M, span_userdanger("R-CORP SUPREME VICTORY."))
+		else
+			var/turf/turf = get_turf(src)
+			new /obj/effect/decal/cleanable/confetti(turf)
+			playsound(turf, 'sound/misc/sadtrombone.ogg', 100)
 
 	else
 		user.gib() //lol, idiot.
@@ -159,11 +196,16 @@ GLOBAL_VAR_INIT(rcorp_wincondition, 0) //what state the game is in.
 
 
 /mob/living/simple_animal/hostile/shrimp_vip/death(gibbed)
-	for(var/mob/M in GLOB.player_list)
-		to_chat(M, span_userdanger("THE VIP HAS BEEN SLAIN."))
-		to_chat(M, span_userdanger("R-CORP MAJOR VICTORY."))
-	SSticker.force_ending = 1
-	..()
+	if(!SSticker.force_ending)
+		for(var/mob/M in GLOB.player_list)
+			to_chat(M, span_userdanger("THE VIP HAS BEEN SLAIN."))
+			to_chat(M, span_userdanger("R-CORP MAJOR VICTORY."))
+		SSticker.force_ending = 1
+	else
+		var/turf/turf = get_turf(src)
+		new /obj/effect/decal/cleanable/confetti(turf)
+		playsound(turf, 'sound/misc/sadtrombone.ogg', 100)
+	return ..()
 
 //Arbiter
 /obj/effect/mob_spawn/human/arbiter/rcorp
@@ -194,8 +236,12 @@ GLOBAL_VAR_INIT(rcorp_wincondition, 0) //what state the game is in.
 	resistance_flags = INDESTRUCTIBLE
 
 /obj/structure/rcorpcomms/Initialize()
-	..()
-	addtimer(CALLBACK(src, PROC_REF(vulnerable)), 15 MINUTES)
+	. = ..()
+	switch(GLOB.rcorp_objective)
+		if("payload_rcorp", "payload_abno")
+			return
+		else
+			addtimer(CALLBACK(src, PROC_REF(vulnerable)), 15 MINUTES)
 
 /obj/structure/rcorpcomms/proc/vulnerable()
 	minor_announce("Warning: The communications shields are now disabled. Communications are now vulnerable" , "R-Corporation Command Update")
@@ -203,15 +249,19 @@ GLOBAL_VAR_INIT(rcorp_wincondition, 0) //what state the game is in.
 	resistance_flags &= ~INDESTRUCTIBLE
 
 /obj/structure/rcorpcomms/deconstruct(disassembled = TRUE)
-	for(var/mob/M in GLOB.player_list)
-		to_chat(M, span_userdanger("RCORP'S COMMUNICATIONS HAVE BEEN DESTROYED."))
-		switch(GLOB.rcorp_wincondition)
-			if(0)
-				to_chat(M, span_userdanger("ABNORMALITY MAJOR VICTORY."))
-			if(1)
-				to_chat(M, span_userdanger("ABNORMALITY SUPREME VICTORY."))
-			if(2)
-				to_chat(M, span_userdanger("ABNORMALITY MINOR VICTORY."))
-	SSticker.force_ending = 1
-	..()
-
+	if(!SSticker.force_ending)
+		for(var/mob/M in GLOB.player_list)
+			to_chat(M, span_userdanger("RCORP'S COMMUNICATIONS HAVE BEEN DESTROYED."))
+			switch(GLOB.rcorp_wincondition)
+				if(0)
+					to_chat(M, span_userdanger("ABNORMALITY MAJOR VICTORY."))
+				if(1)
+					to_chat(M, span_userdanger("ABNORMALITY SUPREME VICTORY."))
+				if(2)
+					to_chat(M, span_userdanger("ABNORMALITY MINOR VICTORY."))
+		SSticker.force_ending = 1
+	else
+		var/turf/turf = get_turf(src)
+		new /obj/effect/decal/cleanable/confetti(turf)
+		playsound(turf, 'sound/misc/sadtrombone.ogg', 100)
+	return ..()

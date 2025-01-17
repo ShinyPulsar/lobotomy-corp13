@@ -10,6 +10,7 @@ HHPP Employee
 	selection_color = "#dddddd"
 	access = list(ACCESS_KITCHEN)
 	minimal_access = list(ACCESS_KITCHEN)
+	departments = DEPARTMENT_SERVICE
 	outfit = /datum/outfit/job/chef
 	antag_rep = 7
 	display_order = JOB_DISPLAY_ORDER_HHPP
@@ -18,7 +19,7 @@ HHPP Employee
 	job_attribute_limit = 0
 
 	allow_bureaucratic_error = FALSE
-	maptype = list("wonderlabs", "city")
+	maptype = list("wonderlabs", "city", "fixers")
 
 
 //Why would you work as a HHPP chef is beyond me.

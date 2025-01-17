@@ -981,7 +981,7 @@
 
 
 //~~~LC13 General Debuffs~~~
-#define CARBON_HALFSPEED /datum/movespeed_modifier/qliphothoverload
+#define MOB_HALFSPEED /datum/movespeed_modifier/qliphothoverload
 /datum/status_effect/qliphothoverload
 	id = "qliphoth intervention field"
 	duration = 15 SECONDS
@@ -991,12 +991,7 @@
 
 /datum/status_effect/qliphothoverload/on_apply()
 	. = ..()
-	if(ishostile(owner))
-		var/mob/living/simple_animal/hostile/L = owner
-		L.TemporarySpeedChange(4, duration)
-	if(iscarbon(owner))
-		var/mob/living/carbon/M = owner
-		M.add_movespeed_modifier(CARBON_HALFSPEED)
+	owner.add_movespeed_modifier(MOB_HALFSPEED)
 
 	var/mutable_appearance/effectvisual = mutable_appearance('icons/obj/clockwork_objects.dmi', "vanguard")
 	effectvisual.pixel_x = -owner.pixel_x
@@ -1005,9 +1000,7 @@
 	owner.add_overlay(statuseffectvisual)
 
 /datum/status_effect/qliphothoverload/on_remove()
-	if(iscarbon(owner))
-		var/mob/living/carbon/M = owner
-		M.remove_movespeed_modifier(CARBON_HALFSPEED)
+	owner.remove_movespeed_modifier(MOB_HALFSPEED)
 
 	owner.cut_overlay(statuseffectvisual)
 	return ..()
@@ -1081,7 +1074,7 @@
 		var/mob/living/simple_animal/M = owner
 		M.RemoveModifier(/datum/dc_change/rend/black)
 
-#undef CARBON_HALFSPEED
+#undef MOB_HALFSPEED
 
 #define STATUS_EFFECT_LCBURN /datum/status_effect/stacking/lc_burn // Deals true damage every 5 sec, can't be applied to godmode (contained abos)
 /datum/status_effect/stacking/lc_burn
@@ -1113,7 +1106,7 @@
 	if(!can_have_status())
 		qdel(src)
 	to_chat(owner, "<span class='warning'>The flame consumes you!!</span>")
-	owner.playsound_local(owner, 'sound/effects/book_burn.ogg', 50, TRUE)
+	owner.playsound_local(owner, 'sound/effects/burn.ogg', 50, TRUE)
 	Check_Resist(owner)
 	if(ishuman(owner))
 		owner.adjustBruteLoss(max(0, stacks - burn_res))
@@ -1169,6 +1162,76 @@
 	else
 		B.add_stacks(stacks)
 
+#define STATUS_EFFECT_LCBLEED /datum/status_effect/stacking/lc_bleed // Deals true damage every 5 sec, can't be applied to godmode (contained abos)
+/datum/status_effect/stacking/lc_bleed
+	id = "lc_bleed"
+	alert_type = /atom/movable/screen/alert/status_effect/lc_bleed
+	max_stacks = 50
+	tick_interval = 5 SECONDS
+	consumed_on_threshold = FALSE
+	var/new_stack = FALSE
+	var/burn_res = 0
+	var/safety = TRUE
+
+/atom/movable/screen/alert/status_effect/lc_bleed
+	name = "Bleeding"
+	desc = "You're currently bleeding!!"
+	icon = 'ModularTegustation/Teguicons/status_sprites.dmi'
+	icon_state = "lc_bleed"
+
+//Bleed Damage Stuff
+/datum/status_effect/stacking/lc_bleed/on_apply()
+	. = ..()
+	RegisterSignal(owner, COMSIG_MOVABLE_PRE_MOVE, PROC_REF(Moved))
+
+//Deals true damage
+/datum/status_effect/stacking/lc_bleed/proc/Moved(mob/user, atom/new_location)
+	SIGNAL_HANDLER
+	if(!can_have_status())
+		qdel(src)
+	to_chat(owner, "<span class='warning'>Your organs bleed due to your movement!!</span>")
+	owner.playsound_local(owner, 'sound/effects/wounds/crackandbleed.ogg', 25, TRUE)
+	if(stacks >= 10)
+		var/obj/effect/decal/cleanable/blood/B = locate() in get_turf(owner)
+		if(!B)
+			B = new /obj/effect/decal/cleanable/blood(get_turf(owner))
+			B.bloodiness = 100
+	if(ishuman(owner))
+		owner.adjustBruteLoss(max(0, stacks))
+	else
+		owner.adjustBruteLoss(stacks*4) // x4 on non humans
+	stacks = round(stacks/2)
+	if(stacks == 0)
+		qdel(src)
+
+
+/datum/status_effect/stacking/lc_bleed/on_remove()
+	UnregisterSignal(owner, COMSIG_MOVABLE_PRE_MOVE)
+	return ..()
+
+/datum/status_effect/stacking/lc_bleed/can_have_status()
+	return (owner.stat != DEAD || !(owner.status_flags & GODMODE))
+
+/datum/status_effect/stacking/lc_bleed/add_stacks(stacks_added)
+	..()
+	new_stack = TRUE
+
+// The Stack Decaying
+/datum/status_effect/stacking/lc_bleed/tick()
+	if(safety)
+		if(new_stack)
+			new_stack = FALSE
+		else
+			qdel(src)
+
+//Mob Proc
+/mob/living/proc/apply_lc_bleed(stacks)
+	var/datum/status_effect/stacking/lc_bleed/B = src.has_status_effect(/datum/status_effect/stacking/lc_bleed)
+	if(!B)
+		src.apply_status_effect(/datum/status_effect/stacking/lc_bleed, stacks)
+	else
+		B.add_stacks(stacks)
+
 /datum/status_effect/display/dyscrasone_withdrawl
 	id = "dyscrasone_withdrawl"
 	status_type = STATUS_EFFECT_UNIQUE
@@ -1215,3 +1278,22 @@
 		return
 	var/mob/living/carbon/human/status_holder = owner
 	status_holder.adjustSanityLoss(stacks * stacks)//sanity damage is the # of stacks squared
+
+/datum/status_effect/healing_block
+	id = "healing_block_base"
+	status_type = STATUS_EFFECT_REFRESH
+	alert_type = null
+
+/datum/status_effect/healing_block/on_apply()
+	if(!HAS_TRAIT(owner, TRAIT_PHYSICAL_HEALING_BLOCKED))
+		ADD_TRAIT(owner, TRAIT_PHYSICAL_HEALING_BLOCKED, STATUS_EFFECT_TRAIT)
+	if(ishuman(owner) && !HAS_TRAIT(owner, TRAIT_SANITY_HEALING_BLOCKED))
+		ADD_TRAIT(owner, TRAIT_SANITY_HEALING_BLOCKED, STATUS_EFFECT_TRAIT)
+	return TRUE
+
+/datum/status_effect/healing_block/on_remove()
+	if(locate(/datum/status_effect/healing_block) in owner.status_effects)
+		return
+	REMOVE_TRAIT(owner, TRAIT_PHYSICAL_HEALING_BLOCKED, STATUS_EFFECT_TRAIT)
+	if(ishuman(owner))
+		REMOVE_TRAIT(owner, TRAIT_SANITY_HEALING_BLOCKED, STATUS_EFFECT_TRAIT)

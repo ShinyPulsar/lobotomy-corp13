@@ -1,10 +1,19 @@
 /obj/vehicle/sealed/mecha/proc/get_armour_facing(relative_dir)
 	switch(relative_dir > 180 ? 360 - relative_dir : relative_dir)
+		if(0) // direct front
+			return facing_modifiers[MECHA_FRONT_ARMOUR]
+		if(45)
+			return facing_modifiers[MECHA_FRONT_DIAGONAL_ARMOUR]
+		if(90)
+			return facing_modifiers[MECHA_SIDE_ARMOUR]
+		if(135)
+			return facing_modifiers[MECHA_BACK_DIAGONAL_ARMOUR]
 		if(180) // BACKSTAB!
 			return facing_modifiers[MECHA_BACK_ARMOUR]
-		if(0, 45) // direct or 45 degrees off
-			return facing_modifiers[MECHA_FRONT_ARMOUR]
-	return facing_modifiers[MECHA_SIDE_ARMOUR] //if its not a front hit or back hit then assume its from the side
+		else
+			stack_trace("mecha somehow got a weird attack angle")
+
+	return facing_modifiers[MECHA_SIDE_ARMOUR] //shouldnt reach this far but just in case
 
 /obj/vehicle/sealed/mecha/take_damage(damage_amount, damage_type = BRUTE, sound_effect = 1, attack_dir)
 	. = ..()
@@ -26,6 +35,7 @@
 	if(!damage_amount)
 		return 0
 	var/booster_deflection_modifier = 1
+	var/booster_dodge_modifier = 1
 	var/booster_damage_modifier = 1
 	if(damage_type in list(BULLET, LASER, ENERGY))
 		for(var/obj/item/mecha_parts/mecha_equipment/antiproj_armor_booster/B in equipment)
@@ -37,15 +47,21 @@
 		for(var/obj/item/mecha_parts/mecha_equipment/anticcw_armor_booster/B in equipment)
 			if(B.attack_react())
 				booster_deflection_modifier *= B.deflect_coeff
+				booster_dodge_modifier *= B.dodge_coeff
 				booster_damage_modifier *= B.damage_coeff
 				break
 
 	if(attack_dir)
 		var/facing_modifier = get_armour_facing(abs(dir2angle(dir) - dir2angle(attack_dir)))
-		booster_damage_modifier /= facing_modifier
-		booster_deflection_modifier *= facing_modifier
+		booster_damage_modifier *= facing_modifier
+		booster_deflection_modifier /= facing_modifier
+		booster_dodge_modifier /= facing_modifier
 	if(prob(deflect_chance * booster_deflection_modifier))
 		visible_message("<span class='danger'>[src]'s armour deflects the attack!</span>")
+		log_message("Armor saved.", LOG_MECHA)
+	if(prob(dodge_chance * booster_dodge_modifier))
+		SpinAnimation(7, 1)
+		visible_message("<span class='danger'>[src] narrowly dodges the attack!</span>")
 		log_message("Armor saved.", LOG_MECHA)
 		return 0
 	if(.)

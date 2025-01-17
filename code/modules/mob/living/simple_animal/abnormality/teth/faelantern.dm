@@ -6,9 +6,11 @@
 	icon_state = "faelantern"
 	icon_living = "faelantern_fairy"
 	icon_dead = "faelantern_egg"
+	core_icon = "faelantern_egg"
 	portrait = "faelantern"
 	maxHealth = 1200
 	health = 1200
+	blood_volume = 0
 	base_pixel_x = -16
 	pixel_x = -16
 	threat_level = TETH_LEVEL
@@ -24,6 +26,7 @@
 	del_on_death = FALSE
 	death_message = "creaks and crumbles into its core."
 	ranged = TRUE
+	ranged_cooldown_time = 1.5 SECONDS
 
 	work_damage_amount = 5
 	work_damage_type = WHITE_DAMAGE
@@ -38,6 +41,21 @@
 	gift_message = "The fairy extends an olive branch towards you."
 
 	abnormality_origin = ABNORMALITY_ORIGIN_LIMBUS
+
+	observation_prompt = "In the middle of a quiet and peaceful forest, a delicate tree branch is placed. <br>\
+		A small fairy with a green glow sits atop it. <br>\
+		Saying no words, the fairy waves at you, inviting you to come over and take a break. <br>\
+		It looked like it was smiling, and it might have been dancing."
+	observation_choices = list(
+		"Move on without resting" = list(TRUE, "This is no time to be careless and stop here. <br>\
+			Tree branches came at you to halt you from leaving, but you narrowly dodged them. <br>\
+			You knew the real meaning of the fairy's gesture: <br>\
+			\"There's no such thing as a free gift\"."),
+		"Take a momentary break" = list(FALSE, "The fairy's smile stretches into an eerie grin. You shouldn't have trusted its appearance and now you'll have to pay the price."),
+		"Take a break where you're standing" = list(FALSE, "You ignore the beckoning fairy and take a short break where you stand. <br>\
+			As you gather yourself to continue on the journey, you realize that several branches had grown in the premises, trapping you in."),
+	)
+
 	var/can_act = FALSE
 	var/break_threshold = 450
 	var/broken = FALSE
@@ -64,18 +82,17 @@
 	for(var/mob/living/carbon/human/H in lured_list)
 		EndEnchant(H)
 	icon_state = icon_dead
-	playsound(src, 'sound/abnormalities/doomsdaycalendar/Limbus_Dead_Generic.ogg', 100, 1)
+	playsound(src, 'sound/effects/limbus_death.ogg', 100, 1)
+	icon = 'ModularTegustation/Teguicons/abno_cores/teth.dmi'
 	animate(src, alpha = 0, time = 10 SECONDS)
 	QDEL_IN(src, 10 SECONDS)
 
 /mob/living/simple_animal/hostile/abnormality/faelantern/PostWorkEffect(mob/living/carbon/human/user, work_type, pe, work_time, canceled)
-	if(work_type == ABNORMALITY_WORK_REPRESSION && get_modified_attribute_level(user, TEMPERANCE_ATTRIBUTE) > 40)
+	if(work_type == ABNORMALITY_WORK_REPRESSION && get_modified_attribute_level(user, TEMPERANCE_ATTRIBUTE) >= 40)
 		datum_reference.qliphoth_change(-1)
 		return
-	if(get_modified_attribute_level(user, TEMPERANCE_ATTRIBUTE) < 40)
+	if(work_type != ABNORMALITY_WORK_REPRESSION && get_modified_attribute_level(user, TEMPERANCE_ATTRIBUTE) < 40)
 		datum_reference.qliphoth_change(-1)
-		return
-	return
 
 /mob/living/simple_animal/hostile/abnormality/faelantern/FailureEffect(mob/living/carbon/human/user, work_type, pe)
 	. = ..()
@@ -90,6 +107,7 @@
 /mob/living/simple_animal/hostile/abnormality/faelantern/OpenFire()
 	if(!can_act)
 		return
+	..()
 	if(lure_cooldown <= world.time)
 		if(fairy_enabled)
 			FairyLure()
@@ -115,7 +133,7 @@
 			return
 	if(health < (maxHealth / 2) && !broken) //50% health or lower
 		broken = TRUE
-		playsound(src, 'sound/abnormalities/doomsdaycalendar/Limbus_Dead_Generic.ogg', 40, 0, 1)
+		playsound(src, 'sound/effects/limbus_death.ogg', 40, 0, 1)
 		BreachDig(TRUE)
 
 /mob/living/simple_animal/hostile/abnormality/faelantern/proc/BreachDig(broken = FALSE)
@@ -163,10 +181,10 @@
 
 /mob/living/simple_animal/hostile/abnormality/faelantern/proc/FairyLure(target)//lure AOE
 	can_act = FALSE
-	lure_cooldown = world.time +lure_cooldown_time
+	lure_cooldown = world.time + lure_cooldown_time
 	playsound(src, 'sound/abnormalities/faelantern/faelantern_giggle.ogg', 100, 0)
 	for(var/mob/living/carbon/human/victim in view(8, src))
-		victim.apply_damage(lure_damage, WHITE_DAMAGE, null, spread_damage = TRUE)
+		victim.apply_damage(lure_damage, WHITE_DAMAGE)
 		if(victim in lured_list || victim.stat >= SOFT_CRIT)
 			continue
 		if(get_attribute_level(victim, TEMPERANCE_ATTRIBUTE) > 40)
@@ -236,7 +254,7 @@
 			if(WEST)
 				R.pixel_x -= 16
 		for(var/mob/living/L in T)
-			L.apply_damage(root_damage, RED_DAMAGE, null, spread_damage = TRUE)
+			L.deal_damage(root_damage, RED_DAMAGE)
 	qdel(src)
 
 //AI controller, FIXME: reduce duplicate code

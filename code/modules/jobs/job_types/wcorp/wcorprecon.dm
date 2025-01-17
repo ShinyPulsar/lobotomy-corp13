@@ -15,9 +15,9 @@ GLOBAL_LIST_INIT(l2asquads, list("Axe", "Buckler", "Cleaver"))
 	outfit = /datum/outfit/job/wcorpl2recon
 	display_order = 3
 
-
 	access = list() //add accesses as necessary
 	minimal_access = list()
+	departments = DEPARTMENT_W_CORP
 
 	roundstart_attributes = list(
 		FORTITUDE_ATTRIBUTE = 80,
@@ -43,7 +43,7 @@ GLOBAL_LIST_INIT(l2asquads, list("Axe", "Buckler", "Cleaver"))
 	ears = /obj/item/radio/headset/agent_lieutenant
 	glasses = /obj/item/clothing/glasses/sunglasses
 	uniform = /obj/item/clothing/under/suit/lobotomy/wsenior
-	belt = /obj/item/ego_weapon/city/charge/wcorp
+	belt = /obj/item/ego_weapon/city/wcorp
 	shoes = /obj/item/clothing/shoes/combat
 	gloves = /obj/item/clothing/gloves/color/black
 	implants = list(/obj/item/organ/cyberimp/eyes/hud/security)

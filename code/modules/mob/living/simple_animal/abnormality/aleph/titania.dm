@@ -36,6 +36,13 @@
 	gift_type = /datum/ego_gifts/soulmate
 	abnormality_origin = ABNORMALITY_ORIGIN_WONDERLAB
 
+	observation_prompt = "Is that you Oberon? <br>My nemesis, my beloved devil. <br>Is it you, who applied the concotion of baneful herb to my eyes?"
+	observation_choices = list(
+		"I am the Oberon you seek" = list(TRUE, "The abhorrent name of the one who stole my child. <br>By your death, I shall finally have my revenge."),
+		"I am not him" = list(FALSE, "Ah... <br>A mere human, human, human. <br>Cease your fear, I shall rid you of your pains. <br>Be reborn as a flower."),
+		"Stay silent" = list(FALSE, "Ah... <br>A mere human, human, human. <br>Cease your fear, I shall rid you of your pains. <br>Be reborn as a flower."),
+	)
+
 	var/fairy_spawn_number = 2
 	var/fairy_spawn_time = 5 SECONDS
 	var/fairy_spawn_limit = 70 // Oh boy, what can go wrong?
@@ -71,19 +78,16 @@
 	return ..()
 
 //Attacking code
-/mob/living/simple_animal/hostile/abnormality/titania/AttackingTarget()
+/mob/living/simple_animal/hostile/abnormality/titania/AttackingTarget(atom/attacked_target)
 	if(fused)
 		return FALSE
-	var/mob/living/carbon/human/H = target
+	var/mob/living/carbon/human/H = attacked_target
 	//Kills the weak immediately.
 	if(get_user_level(H) < 4 && (ishuman(H)))
 		say("I rid you of your pain, mere human.")
+		//Double Check
+		SpawnFairies(fairy_spawn_number*2, H, ignore_cap = TRUE)
 		H.gib()
-		for(var/i=fairy_spawn_number*2, i>=1, i--)	//This counts down.
-			var/mob/living/simple_animal/hostile/fairyswarm/V = new(get_turf(target))
-			V.faction = faction
-			spawned_mobs+=V
-		return
 
 	if(target == nemesis)	//Deals pale damage to Oberon, fuck you.
 		melee_damage_type = PALE_DAMAGE
@@ -96,10 +100,10 @@
 	. = ..()
 
 	if(H.stat == DEAD && target == nemesis)		//Does she slay Oberon personally? If so, get buffed.
-		SpeedChange(-1)
+		ChangeMoveToDelayBy(-1)
 		melee_damage_lower = 110
 		melee_damage_upper = 140
-		adjustBruteLoss(-maxHealth) // Round 2, baby
+		adjustBruteLoss(-maxHealth, forced = TRUE) // Round 2, baby
 
 		to_chat(src, span_userdanger("[nemesis], my beloved devil, I finally get my revenge."))
 		nemesis = null
@@ -111,21 +115,24 @@
 /mob/living/simple_animal/hostile/abnormality/titania/proc/FairyLoop()
 	if(IsCombatMap())
 		return
-	//Blurb about how many we have spawned
-	listclearnulls(spawned_mobs)
-	for(var/mob/living/L in spawned_mobs)
-		if(L.stat == DEAD)
-			qdel(L)
-			spawned_mobs -= L
-	if(length(spawned_mobs) >= fairy_spawn_limit)
+	SpawnFairies(fairy_spawn_number)
+	addtimer(CALLBACK(src, PROC_REF(FairyLoop)), fairy_spawn_time)
+
+/mob/living/simple_animal/hostile/abnormality/titania/proc/SpawnFairies(amount, mob/turf_mob, ignore_cap = FALSE)
+	if(!ignore_cap && (length(spawned_mobs) > fairy_spawn_limit))
 		return
 
-	//Actually spawning them
-	for(var/i=fairy_spawn_number, i>=1, i--)	//This counts down.
-		var/mob/living/simple_animal/hostile/fairyswarm/V = new(get_turf(src))
-		V.faction = faction
-		spawned_mobs+=V
-	addtimer(CALLBACK(src, PROC_REF(FairyLoop)), fairy_spawn_time)
+	var/turf/spawn_turf
+	if(turf_mob)
+		spawn_turf = get_turf(turf_mob)
+	else
+		spawn_turf = get_turf(src)
+
+	for(var/i in 1 to amount)
+		var/mob/living/simple_animal/hostile/fairyswarm/fairy = new(spawn_turf)
+		fairy.faction = faction
+		fairy.mommy = src
+		spawned_mobs += fairy
 
 //Setting the nemesis
 /mob/living/simple_animal/hostile/abnormality/titania/proc/ChooseNemesis()
@@ -146,7 +153,7 @@
 /mob/living/simple_animal/hostile/abnormality/titania/death(gibbed)
 	for(var/mob/living/A in spawned_mobs)
 		A.death()
-	..()
+	return ..()
 
 
 //------------------------------------------------------------------------------
@@ -198,7 +205,7 @@
 
 /mob/living/simple_animal/hostile/abnormality/titania/proc/Punishment(mob/living/sinner)
 	to_chat(sinner, span_userdanger("You are hurt due to breaking Fairy Law."))
-	sinner.apply_damage(law_damage, PALE_DAMAGE, null, sinner.run_armor_check(null, PALE_DAMAGE), spread_damage = TRUE)
+	sinner.deal_damage(law_damage, PALE_DAMAGE)
 	new /obj/effect/temp_visual/dir_setting/bloodsplatter(get_turf(sinner), pick(GLOB.alldirs))
 
 //Ranged stuff
@@ -220,9 +227,7 @@
 		Punishment(Proj.firer)
 
 	if(currentlaw == "ranged fairy")
-		var/mob/living/simple_animal/hostile/fairyswarm/V = new(get_turf(src))
-		V.faction = faction
-		spawned_mobs+=V
+		SpawnFairies(1)
 
 //Melee stuff
 /mob/living/simple_animal/hostile/abnormality/titania/attacked_by(obj/item/I, mob/living/user)
@@ -287,8 +292,15 @@
 	attack_sound = 'sound/weapons/bladeslice.ogg'
 	mob_size = MOB_SIZE_TINY
 	del_on_death = TRUE
+	var/mob/living/simple_animal/hostile/abnormality/titania/mommy
 
 /mob/living/simple_animal/hostile/fairyswarm/Initialize()
 	. = ..()
 	pixel_x = rand(-16, 16)
 	pixel_y = rand(-16, 16)
+
+/mob/living/simple_animal/hostile/fairyswarm/Destroy()
+	if(mommy)
+		mommy.spawned_mobs -= src
+		mommy = null
+	return ..()

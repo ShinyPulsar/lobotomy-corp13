@@ -4,12 +4,15 @@
 	icon = 'ModularTegustation/Teguicons/48x64.dmi'
 	icon_state = "judgement_bird"
 	icon_living = "judgement_bird"
+	icon_dead = "judgement_bird_dead"
+	core_icon = "jbird_egg"
 	portrait = "judgement_bird"
 	faction = list("hostile", "Apocalypse")
 	speak_emote = list("chirps")
 
 	pixel_x = -8
 	base_pixel_x = -8
+	del_on_death = FALSE
 
 	ranged = TRUE
 	minimum_distance = 6
@@ -45,6 +48,14 @@
 	grouped_abnos = list(
 		/mob/living/simple_animal/hostile/abnormality/big_bird = 3,
 		/mob/living/simple_animal/hostile/abnormality/punishing_bird = 3,
+	)
+
+	observation_prompt = "\"Long Bird\" who lived in the forest didn't want to let creatures to be eaten by monsters. <br>\
+		His initial goal was pure, at least. <br>The forest began to be saturated by darkness. <br>His long vigil is saturated with memories and regrets."
+	observation_choices = list(
+		"Console the bird" = list(TRUE, "Long Bird put down his scales, that had been with him for a long time. <br>\
+			The long-lasting judgement finally ends. <br>Long Bird slowly realizes the secrets behind the monster, and he waits. <br>For the forest that he will never take back."),
+		"Leave him be" = list(FALSE, "Long Bird sees through you, even though he is blind. <br>He is weighing your sins."),
 	)
 
 	var/judgement_cooldown = 10 SECONDS
@@ -88,13 +99,13 @@
 	playsound(get_turf(src), 'sound/abnormalities/judgementbird/pre_ability.ogg', 50, 0, 2)
 	SLEEP_CHECK_DEATH(2 SECONDS)
 	playsound(get_turf(src), 'sound/abnormalities/judgementbird/ability.ogg', 75, 0, 7)
-	for(var/mob/living/L in livinginrange(judgement_range, src))
+	for(var/mob/living/L in urange(judgement_range, src))
 		if(faction_check_mob(L, FALSE))
 			continue
 		if(L.stat == DEAD)
 			continue
 		new /obj/effect/temp_visual/judgement(get_turf(L))
-		L.apply_damage(judgement_damage, PALE_DAMAGE, null, L.run_armor_check(null, PALE_DAMAGE), spread_damage = TRUE)
+		L.deal_damage(judgement_damage, PALE_DAMAGE)
 
 		if(L.stat == DEAD)	//Gotta fucking check again in case it kills you. Real moment
 			if(!IsCombatMap())
@@ -145,6 +156,8 @@
 /mob/living/simple_animal/hostile/abnormality/judgement_bird/death(gibbed)
 	for(var/mob/living/V in birdlist)
 		V.death()
+	animate(src, alpha = 0, time = 10 SECONDS)
+	QDEL_IN(src, 10 SECONDS)
 	..()
 
 //Runaway birds - Mini Simple Smile, 2 spawned after Jbird kills a player, and 2 on spawn.
@@ -175,10 +188,14 @@
 	retreat_distance = 3
 	minimum_distance = 1
 
-/mob/living/simple_animal/hostile/runawaybird/AttackingTarget()
+/mob/living/simple_animal/hostile/nosferatu_mob/OpenFire(atom/A)
+	visible_message(span_danger("<b>[src]</b> taunts [A]!"))
+	ranged_cooldown = world.time + ranged_cooldown_time
+
+/mob/living/simple_animal/hostile/runawaybird/AttackingTarget(atom/attacked_target)
 	. = ..()
-	if(ishuman(target))
-		var/mob/living/carbon/human/L = target
+	if(ishuman(attacked_target))
+		var/mob/living/carbon/human/L = attacked_target
 		L.Knockdown(20)
 		var/obj/item/held = L.get_active_held_item()
 		L.dropItemToGround(held) //Drop weapon

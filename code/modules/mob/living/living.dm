@@ -394,7 +394,7 @@
 		to_chat(src, text="You are unable to succumb to death! This life continues.", type=MESSAGE_TYPE_INFO)
 		return
 	log_message("Has [whispered ? "whispered his final words" : "succumbed to death"] with [round(health, 0.1)] points of health!", LOG_ATTACK)
-	adjustOxyLoss(health - HEALTH_THRESHOLD_DEAD)
+	adjustOxyLoss(health - death_threshold)
 	updatehealth()
 	if(!whispered)
 		to_chat(src, "<span class='notice'>You have given up life and succumbed to death.</span>")
@@ -734,7 +734,7 @@
 //proc called by revive(), to check if we can actually ressuscitate the mob (we don't want to revive him and have him instantly die again)
 /mob/living/proc/can_be_revived()
 	. = TRUE
-	if(health <= HEALTH_THRESHOLD_DEAD)
+	if(health <= death_threshold)
 		return FALSE
 
 /mob/living/proc/update_damage_overlays()
@@ -1024,7 +1024,12 @@
 		to_chat(src, "<span class='notice'>You try to put [what] on [who]...</span>")
 		who.log_message("[key_name(who)] is having [what] put on them by [key_name(src)]", LOG_ATTACK, color="red")
 		log_message("[key_name(who)] is having [what] put on them by [key_name(src)]", LOG_ATTACK, color="red", log_globally=FALSE)
-		if(do_mob(src, who, what.equip_delay_other))
+
+		var/equip_delay = what.equip_delay_other
+		if(istype(what,/obj/item/clothing/suit/armor/ego_gear))
+			var/obj/item/clothing/suit/armor/ego_gear/EGO = what
+			equip_delay = max(EGO.equip_delay_other, EGO.equip_slowdown) //Preventing 0 delay on some ego suits
+		if(do_mob(src, who, equip_delay))
 			if(what && Adjacent(who) && what.mob_can_equip(who, src, final_where, TRUE, TRUE))
 				if(temporarilyRemoveItemFromInventory(what))
 					if(where_list)

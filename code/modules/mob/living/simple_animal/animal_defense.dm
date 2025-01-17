@@ -107,10 +107,9 @@
 		if(.)
 			L.amount_grown = min(L.amount_grown + damage, L.max_grown)
 
-/mob/living/simple_animal/attack_animal(mob/living/simple_animal/M)
+/mob/living/simple_animal/attack_animal(mob/living/simple_animal/M, damage)
 	. = ..()
 	if(.)
-		var/damage = rand(M.melee_damage_lower, M.melee_damage_upper)
 		return attack_threshold_check(damage, M.melee_damage_type)
 
 /mob/living/simple_animal/attack_slime(mob/living/simple_animal/slime/M)
@@ -142,6 +141,7 @@
 
 	if(temp_damage >= 0 && temp_damage <= force_threshold)
 		visible_message(span_warning("[src] looks unharmed!"))
+		DamageEffect(0, damagetype)
 		return FALSE
 
 	if(actuallydamage)
@@ -149,6 +149,10 @@
 	return TRUE
 
 /mob/living/simple_animal/bullet_act(obj/projectile/Proj, def_zone, piercing_hit = FALSE)
+	if(projectile_blockers && projectile_blockers.len > 0)
+		for(var/i in projectile_blockers)
+			Proj.impacted[i] = TRUE
+		Proj.impacted[src] = TRUE
 	apply_damage(Proj.damage, Proj.damage_type)
 	Proj.on_hit(src, 0, piercing_hit)
 	return BULLET_ACT_HIT

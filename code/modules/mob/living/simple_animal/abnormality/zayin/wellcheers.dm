@@ -56,6 +56,15 @@
 	harvest_phrase = span_notice("The machine dispenses some clear-ish soda into %VESSEL.")
 	harvest_phrase_third = "%PERSON holds up %VESSEL and lets %ABNO dispense some clear-ish soda into it."
 
+	observation_prompt = "A vending machine stands before you. <br>\
+		Two delicious looking shrimp are standing at both sides of the machine. <br>Will you buy soda?"
+	observation_choices = list(
+		"Yes" = list(TRUE, "Before you can make a choice, one of the shrimp buys you soda. <br>\
+			You drink the soda, and fall asleep... <br>... <br>Somewhere in the distance, you hear seagulls."),
+		"No" = list(TRUE, "Before you can make a choice, one of the shrimp buys you soda. <br>\
+			You drink the soda, and fall asleep... <br>... <br>Somewhere in the distance, you hear seagulls.")
+	)
+
 /mob/living/simple_animal/hostile/abnormality/wellcheers/HandleStructures()
 	. = ..()
 	if(!.)
@@ -198,7 +207,8 @@
 	. = ..()
 	if(isnull(damage_type))
 		return
-	owner.apply_damage(debuff_damage, damage_type, null, owner.run_armor_check(null, damage_type))
+
+	owner.deal_damage(debuff_damage, damage_type)
 
 /atom/movable/screen/alert/status_effect/wellcheers_bad
 	name = "Shrimp Soda"

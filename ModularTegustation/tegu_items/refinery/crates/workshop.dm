@@ -18,10 +18,10 @@
 	)
 
 	rareloot =	list(
-		/obj/item/ego_weapon/city/charge/cane/cane,
-		/obj/item/ego_weapon/city/charge/cane/claw,
-		/obj/item/ego_weapon/city/charge/cane/briefcase,
-		/obj/item/ego_weapon/city/charge/cane/fist,
+		/obj/item/ego_weapon/city/cane/cane,
+		/obj/item/ego_weapon/city/cane/claw,
+		/obj/item/ego_weapon/city/cane/briefcase,
+		/obj/item/ego_weapon/city/cane/fist,
 		/obj/item/ego_weapon/city/leaflet/square,
 	)
 
@@ -40,6 +40,7 @@
 	icon_state = "crate_allas"
 	rarechance = 25
 	veryrarechance = 1
+	crate_multiplier = 4
 	lootlist =	list(
 		/obj/item/ego_weapon/city/fixerblade,
 		/obj/item/ego_weapon/city/fixergreatsword,
@@ -74,9 +75,9 @@
 		/obj/item/ego_weapon/city/dawn/sword,
 		/obj/item/ego_weapon/city/dawn/cello,
 		/obj/item/ego_weapon/city/wedge,
-		/obj/item/gun/ego_gun/city/fullstop/assault,
-		/obj/item/gun/ego_gun/city/fullstop/sniper,
-		/obj/item/gun/ego_gun/city/fullstop/pistol,
+		/obj/item/ego_weapon/ranged/city/fullstop/assault,
+		/obj/item/ego_weapon/ranged/city/fullstop/sniper,
+		/obj/item/ego_weapon/ranged/city/fullstop/pistol,
 	)
 
 	rareloot =	list(
@@ -91,7 +92,7 @@
 
 	veryrareloot =	list(
 		/obj/item/ego_weapon/city/dawn/zwei,
-		/obj/item/gun/ego_gun/city/fullstop/deagle,
+		/obj/item/ego_weapon/ranged/city/fullstop/deagle,
 		/obj/item/clothing/suit/armor/ego_gear/city/dawnleader,
 		/obj/item/clothing/suit/armor/ego_gear/city/wedgeleader,
 		/obj/item/clothing/suit/armor/ego_gear/city/fullstopleader,
@@ -111,9 +112,9 @@
 	)
 
 	rareloot =	list(
-		/obj/item/ego_weapon/city/charge/rosespanner/hammer,
-		/obj/item/ego_weapon/city/charge/rosespanner/spear,
-		/obj/item/ego_weapon/city/charge/rosespanner/minihammer,
+		/obj/item/ego_weapon/city/rosespanner/hammer,
+		/obj/item/ego_weapon/city/rosespanner/spear,
+		/obj/item/ego_weapon/city/rosespanner/minihammer,
 		/obj/item/clothing/suit/armor/ego_gear/city/rosespannerrep,
 		/obj/item/clothing/suit/armor/ego_gear/city/rosespanner,
 	)

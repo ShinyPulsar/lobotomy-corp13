@@ -19,7 +19,7 @@
 		ABNORMALITY_WORK_INSTINCT = list(40, 40, 45, 50, 50),
 		ABNORMALITY_WORK_INSIGHT = list(30, 35, 35, 40, 45),
 		ABNORMALITY_WORK_ATTACHMENT = list(30, 35, 35, 40, 45),
-		ABNORMALITY_WORK_REPRESSION = list(0, 0, 20, 25, 30),
+		ABNORMALITY_WORK_REPRESSION = list(0, 0, 45, 50, 50),
 	)
 	damage_coeff = list(RED_DAMAGE = 0.8, WHITE_DAMAGE = 1.2, BLACK_DAMAGE = 0.4, PALE_DAMAGE = 1.5)
 	melee_damage_lower = 35
@@ -43,6 +43,16 @@
 	)
 	gift_type = /datum/ego_gifts/dipsia
 	abnormality_origin = ABNORMALITY_ORIGIN_ARTBOOK
+
+	observation_prompt = "I was human once, am still human. <br>I think. It's hard to tell anymore. <br>\
+		He seemed lost, wandering the backstreets in such finery made him a tempting target, I never realised it was everyone else who was in danger. <br>\
+		He wears the mask of humanity well, but a single drop of blood is all it took for him to reveal his ferocity. <br>\
+		\"It's too early for a nap... <br>Won't you join me and share the pleasure?\" <br>He asks, his lips still red with my blood."
+	observation_choices = list(
+		"Join the Danse Macabre" = list(TRUE, "Refusing wasn't an option and he smiles, raising his glass. <br>\
+			\"A toast then! To a night when one is allowed to pursue all kinds of desire, a never-ending blood-red night!\" <br>\
+			Blood.... <br>The blood brings me eternal happiness, forfeiting false hope, let's forget all pretenses of humanity..."),
+	)
 
 	//work stuff
 	var/feeding
@@ -100,7 +110,7 @@
 
 /mob/living/simple_animal/hostile/abnormality/nosferatu/Worktick(mob/living/carbon/human/user) //take damage every work on instinct
 	if(feeding)
-		user.apply_damage(3, BLACK_DAMAGE, null, user.run_armor_check(null, BLACK_DAMAGE))
+		user.deal_damage(3, BLACK_DAMAGE)
 		new /obj/effect/temp_visual/dir_setting/bloodsplatter(get_turf(user)) //Indicates damage being dealt to the player
 
 /mob/living/simple_animal/hostile/abnormality/nosferatu/PostWorkEffect(mob/living/carbon/human/user, work_type, pe, work_time)
@@ -160,7 +170,7 @@
 	animate(src, transform = matrix()*1.2, color = "#FF0000", time = 10)
 	playsound(get_turf(src), 'sound/abnormalities/nosferatu/transform.ogg', 35, 8)
 	bloodlust_cooldown = clamp(bloodlust_cooldown - 2, 0, 4)
-	SpeedChange(-1)
+	ChangeMoveToDelayBy(-1)
 	berzerk = TRUE
 
 /mob/living/simple_animal/hostile/abnormality/nosferatu/add_splatter_floor(turf/T, small_drip) //no spilling blood, it just works.
@@ -178,15 +188,15 @@
 		Banquet()
 		return
 
-/mob/living/simple_animal/hostile/abnormality/nosferatu/AttackingTarget() //Combo for double attacks
-	if(!ishuman(target))
+/mob/living/simple_animal/hostile/abnormality/nosferatu/AttackingTarget(atom/attacked_target) //Combo for double attacks
+	if(!ishuman(attacked_target))
 		return ..()
-	var/mob/living/carbon/human/H = target
+	var/mob/living/carbon/human/H = attacked_target
 	if(bloodlust <= 0)
 		bloodlust = bloodlust_cooldown
-		H.apply_damage(45, BLACK_DAMAGE, null, H.run_armor_check(null, BLACK_DAMAGE))
+		H.deal_damage(45, BLACK_DAMAGE)
 		playsound(get_turf(src), 'sound/abnormalities/nosferatu/bat_attack.ogg', 50, 1)
-		to_chat(target, span_danger("The [src] attacks you savagely!"))
+		to_chat(attacked_target, span_danger("The [src] attacks you savagely!"))
 		AdjustThirst(40)
 	else
 		bloodlust -= 1
@@ -239,6 +249,7 @@
 	faction = list("hostile")
 	is_flying_animal = TRUE
 	density = FALSE
+	status_flags = MUST_HIT_PROJECTILE // Lets them be shot
 	speak_emote = list("screeches")
 	attack_verb_continuous = "bites"
 	attack_verb_simple = "bite"
@@ -256,12 +267,16 @@
 	retreat_distance = 3
 	minimum_distance = 1
 
-/mob/living/simple_animal/hostile/nosferatu_mob/AttackingTarget() //they spawn blood on hit
-	if(ishuman(target))
+/mob/living/simple_animal/hostile/nosferatu_mob/AttackingTarget(atom/attacked_target) //they spawn blood on hit
+	if(ishuman(attacked_target))
 		var/obj/effect/decal/cleanable/blood/B = locate() in get_turf(src)
 		if(!B)
 			B = new /obj/effect/decal/cleanable/blood(get_turf(src))
 			B.bloodiness = 100
 	return ..()
+
+/mob/living/simple_animal/hostile/nosferatu_mob/OpenFire(atom/A)
+	visible_message(span_danger("<b>[src]</b> flies around, seemingly aiming for [A]!"))
+	ranged_cooldown = world.time + ranged_cooldown_time
 
 #undef NOSFERATU_BANQUET_COOLDOWN

@@ -11,6 +11,7 @@
 	base_pixel_y = -32
 	maxHealth = 400
 	health = 400
+	blood_volume = 0
 	start_qliphoth = 4
 	threat_level = TETH_LEVEL
 	work_chances = list(
@@ -34,6 +35,16 @@
 		/mob/living/simple_animal/hostile/abnormality/quiet_day = 1.5,
 		/mob/living/simple_animal/hostile/abnormality/khz = 1.5,
 		/mob/living/simple_animal/hostile/abnormality/army = 1.5,
+	)
+
+	observation_prompt = "You remember that day and this room still does. <br>\
+		As you wait, your radio hisses with static and ghostly voices, buried in electromagnetic snow. <br>\
+		\"h...e...l...p\" <br>\
+		A ghost from the past calls out, the voice is familiar but you can't place who it belongs to."
+	observation_choices = list(
+		"Tune your radio to 1.76 MHz" = list(TRUE, "You tune your radio and hear her plea plain as day, her voice is like sunshine. <br>\
+			Unbridled anger and sorrow at the unfairness of it all fills you as you leave the cell."),
+		"Forget" = list(FALSE, "But you can't forget. Not until you've atoned."),
 	)
 
 	var/reset_time = 4 MINUTES //Qliphoth resets after this time. To prevent bugs
@@ -83,8 +94,7 @@
 		if(faction_check_mob(L, FALSE) || L.z != z || L.stat == DEAD)
 			continue
 		new /obj/effect/temp_visual/dir_setting/ninja(get_turf(L))
-		L.apply_damage(20, WHITE_DAMAGE, null, L.run_armor_check(null, WHITE_DAMAGE), spread_damage = TRUE)
-
+		L.deal_damage(20, WHITE_DAMAGE)
 
 
 //We're gonna make it a weather that affects all hallways.
@@ -106,4 +116,4 @@
 
 /datum/weather/mhz/weather_act(mob/living/carbon/human/L)
 	if(ishuman(L))
-		L.apply_damage(5, WHITE_DAMAGE, null, L.run_armor_check(null, WHITE_DAMAGE), spread_damage = TRUE)
+		L.deal_damage(5, WHITE_DAMAGE)

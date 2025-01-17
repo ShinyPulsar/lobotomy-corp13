@@ -44,6 +44,16 @@
 	gift_type = /datum/ego_gifts/pleasure
 	abnormality_origin = ABNORMALITY_ORIGIN_LOBOTOMY
 
+	observation_prompt = "The red flower waits expectantly for you as you enter the containment unit, \
+		studying your movements it leans down towards you and bares its thorns to you."
+	observation_choices = list(
+		"Just observe" = list(TRUE, "The flower pulls back when it realises you make no effort to try and touch it. <br>\
+			You study it and it studies you back, it only ever wanted to make people happy the only way it knew how. <br>\
+			You turn to leave, resolving to chase after happiness with your own power."),
+		"Touch the thorns" = list(FALSE, "The thorns prick your hands and you feel an indescribable rush of pleasure. <br>\
+			Poppy flowers like this one have ruined many lives and now it's ruined yours, but for now - you're happy."),
+	)
+
 	//the agent that started work on porccubus
 	var/agent_ckey
 	var/teleport_cooldown_time = 5 MINUTES
@@ -187,10 +197,10 @@
 		playsound(src, 'sound/abnormalities/porccubus/porccu_giggle.ogg', 10, FALSE, 4) // This thing is absurdly loud
 		ranged_cooldown = world.time + ranged_cooldown_time
 
-/mob/living/simple_animal/hostile/abnormality/porccubus/AttackingTarget()
+/mob/living/simple_animal/hostile/abnormality/porccubus/AttackingTarget(atom/attacked_target)
 	var/mob/living/carbon/human/H
-	if(ishuman(target))
-		H = target
+	if(ishuman(attacked_target))
+		H = attacked_target
 	. = ..()
 	if(.)
 		if(!H)

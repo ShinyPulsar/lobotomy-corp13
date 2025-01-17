@@ -5,13 +5,14 @@
 	department_head = list("your corporation")
 	faction = "Station"
 	supervisors = "the manager"
-	selection_color = "#e09660"
+	selection_color = "#777777"
 	total_positions = 1
 	spawn_positions = 1
 	display_order = JOB_DISPLAY_ORDER_REPRESENTATIVE
 	trusted_only = TRUE
 	access = list(ACCESS_PHARMACY, ACCESS_COMMAND) // I want to use the number 69.
 	minimal_access = list(ACCESS_PHARMACY, ACCESS_COMMAND)
+	departments = DEPARTMENT_COMMAND
 	mapexclude = list("wonderlabs", "mini")
 
 	job_abbreviation = "REP"
@@ -32,7 +33,9 @@
 	uniform = /obj/item/clothing/under/suit/lobotomy
 	shoes = /obj/item/clothing/shoes/laceup
 
-	backpack_contents = list()
+	backpack_contents = list(
+		/obj/item/storage/box/rxglasses/spyglasskit,
+	)
 
 /// Alternate corps you can pick
 /datum/job/representative
@@ -42,6 +45,7 @@
 		"K Corp Representative",
 		"N Corp Representative",
 		"P Corp Representative",
+		"J Corp Representative",
 	)
 
 /datum/outfit/job/representative/rcorprepresentative
@@ -64,3 +68,7 @@
 /datum/outfit/job/representative/pcorprepresentative
 	name = "P Corp Representative"
 	uniform = /obj/item/clothing/under/suit/lobotomy/pcorp
+
+/datum/outfit/job/representitive/jcorprepresentative
+	name = "J Corp Representative"
+	uniform = /obj/item/clothing/under/suit/lobotomy/jcorp

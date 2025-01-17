@@ -21,6 +21,7 @@
 	ranged = TRUE
 	pixel_x = -8
 	base_pixel_x = -8
+	del_on_death = FALSE
 	stat_attack = HARD_CRIT
 	can_breach = TRUE
 	threat_level = ALEPH_LEVEL
@@ -46,6 +47,20 @@
 		/mob/living/simple_animal/hostile/abnormality/nobody_is = 1.5,
 	)
 
+	observation_prompt = "*Teeth grinding* <br>Incomprehensible sounds can be heard. <br>\
+		Its body was already broken long time ago. <br>\
+		The twisted mouth opens, the crushed down tongue undulates. <br>\"M-ma......man-ag......r.......\" <br>It's calling for the manager."
+	observation_choices = list(
+		"Ignore it" = list(TRUE, "A chunk of flesh dropped from the mouth to the ground, depriving the abnormality an ability to talk. <br>\
+			It's talking inside the body of an employee. <br>But it is not the employee who speaks. <br>\
+			The sound of calling me. <br>Is nothing but an empty shell mimicking a dead person. <br>\
+			How many employees would have suffered to this sound? <br>It keeps getting closer to human. <br>\
+			It keeps trying. <br>However, as always, at the end, Nothing there."),
+		"Approach it" = list(FALSE, "I think of people who were friends with this employee. <br>\
+			Those eyes, shoulders, and every bit of muscle belong to someone else. <br>\
+			It smiles. <br>No, it pretends to smile. <br>Who could be it?"),
+	)
+
 	var/mob/living/disguise = null
 	var/saved_appearance
 	var/can_act = TRUE
@@ -61,6 +76,8 @@
 
 	var/last_heal_time = 0
 	var/heal_percent_per_second = 0.0085
+	var/regen_on = TRUE
+	var/r_corp_regen_start = 1
 
 	var/datum/looping_sound/nothingthere_ambience/soundloop
 	var/datum/looping_sound/nothingthere_heartbeat/heartbeat
@@ -213,16 +230,26 @@
 					GiveTarget(speaker)
 				say(line)
 		if((last_heal_time + 1 SECONDS) < world.time) // One Second between heals guaranteed
-			var/heal_amount = ((world.time - last_heal_time)/10)*heal_percent_per_second*maxHealth
-			if(health <= maxHealth*0.3)
-				heal_amount *= 2
-			adjustBruteLoss(-heal_amount)
+			if(SSmaptype.maptype == "rcorp")
+				regen_on = TRUE
+				if(health > maxHealth * r_corp_regen_start)
+					regen_on = FALSE
+			if(regen_on == TRUE)
+				var/heal_amount = ((world.time - last_heal_time)/10)*heal_percent_per_second*maxHealth
+				if(health <= maxHealth*0.3)
+					heal_amount *= 2
+				adjustBruteLoss(-heal_amount)
 			last_heal_time = world.time
 		if(next_transform && (world.time > next_transform))
 			next_stage()
 		if(current_stage == 2) // Egg
 			var/obj/effect/temp_visual/decoy/D = new /obj/effect/temp_visual/decoy(get_turf(src), src)
 			animate(D, alpha = 0, transform = matrix()*1.2, time = 7)
+
+/mob/living/simple_animal/hostile/abnormality/nothing_there/death(gibbed)
+	animate(src, alpha = 0, time = 10 SECONDS)
+	QDEL_IN(src, 10 SECONDS)
+	..()
 
 /mob/living/simple_animal/hostile/abnormality/nothing_there/Hear(message, atom/movable/speaker, datum/language/message_language, raw_message, radio_freq, list/spans, list/message_mods)
 	. = ..()
@@ -266,7 +293,7 @@
 	if(!istype(disguise))
 		return
 	next_transform = world.time + rand(30 SECONDS, 40 SECONDS)
-	SpeedChange(1.5)
+	ChangeMoveToDelayBy(1.5)
 	appearance = saved_appearance
 	disguise.forceMove(get_turf(src))
 	disguise.gib()
@@ -294,15 +321,16 @@
 			icon_state = icon_living
 			pixel_x = -16
 			base_pixel_x = -16
+			offsets_pixel_x = list("south" = -16, "north" = -16, "west" = -16, "east" = -16)
+			SetOccupiedTiles(up = 1)
 			ChangeResistances(list(WHITE_DAMAGE = 0.4, BLACK_DAMAGE = 0.4, PALE_DAMAGE = 0.8))
 			can_act = TRUE
 			melee_damage_lower = 65
 			melee_damage_upper = 75
-			SpeedChange(1.5)
+			ChangeMoveToDelayBy(1.5)
 			heartbeat.stop()
 			breachloop.start()
-	UpdateSpeed()
-	adjustBruteLoss(-maxHealth)
+	adjustBruteLoss(-maxHealth, forced = TRUE)
 	current_stage = clamp(current_stage + 1, 1, 3)
 
 /mob/living/simple_animal/hostile/abnormality/nothing_there/proc/Hello(target)
@@ -399,8 +427,7 @@
 	// Teleport us somewhere where nobody will see us at first
 	disguiseloop.stop()
 	fear_level = 0 // So it doesn't inflict fear to those around them
-	SpeedChange(-1.5) // This will make them move at a speed similar to normal players
-	UpdateSpeed()
+	ChangeMoveToDelayBy(-1.5) // This will make them move at a speed similar to normal players
 	var/list/priority_list = list()
 	for(var/turf/T in GLOB.xeno_spawn)
 		var/people_in_range = 0

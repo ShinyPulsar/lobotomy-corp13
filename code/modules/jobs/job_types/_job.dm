@@ -79,6 +79,9 @@
 
 	var/bounty_types = CIV_JOB_BASIC
 
+	///Bitfield of departments this job belongs wit
+	var/departments = NONE
+
 	/// Should this job be allowed to be picked for the bureaucratic error event?
 	var/allow_bureaucratic_error = TRUE
 
@@ -92,6 +95,9 @@
 
 	///Is this job trusted only? If so, then this job requires the player to be in the trusted_players.txt
 	var/trusted_only = FALSE
+
+	//Mentors have one role
+	var/mentor_only = FALSE
 
 	//Does this job need any extra instructions?
 	var/job_important
@@ -174,6 +180,9 @@
 			Y.registered_name = H.name
 			Y.update_label()
 
+	var/obj/item/organ/brain/B = H.getorganslot(ORGAN_SLOT_BRAIN)
+	if(LAZYLEN(B.initial_traits) == 0)
+		B.initial_traits = H.status_traits
 
 /datum/job/proc/announce(mob/living/carbon/human/H)
 	if(head_announce)

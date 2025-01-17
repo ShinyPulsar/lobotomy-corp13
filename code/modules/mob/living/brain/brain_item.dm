@@ -12,7 +12,7 @@
 	attack_verb_simple = list("attack", "slap", "whack")
 
 	///The brain's organ variables are significantly more different than the other organs, with half the decay rate for balance reasons, and twice the maxHealth
-	decay_factor = STANDARD_ORGAN_DECAY	* 0.5		//30 minutes of decaying to result in a fully damaged brain, since a fast decay rate would be unfun gameplay-wise
+	decay_factor = STANDARD_ORGAN_DECAY	* 0.25		//60 minutes of decaying to result in a fully damaged brain, since a fast decay rate would be unfun gameplay-wise
 
 	maxHealth = BRAIN_DAMAGE_DEATH
 	low_threshold = 45
@@ -121,7 +121,7 @@
 
 	if((organ_flags & ORGAN_FAILING) && O.is_drainable() && O.reagents.has_reagent(/datum/reagent/medicine/mannitol)) //attempt to heal the brain
 		. = TRUE //don't do attack animation.
-		if(brainmob?.health <= HEALTH_THRESHOLD_DEAD) //if the brain is fucked anyway, do nothing
+		if(brainmob?.health <= brainmob.death_threshold) //if the brain is fucked anyway, do nothing
 			to_chat(user, span_warning("[src] is far too damaged, there's nothing else we can do for it!"))
 			return
 
@@ -347,13 +347,13 @@
 		if(TRAUMA_RESILIENCE_SURGERY)
 			max_traumas = TRAUMA_LIMIT_SURGERY
 		if(TRAUMA_RESILIENCE_WOUND)
-			max_traumas = TRAUMA_LIMIT_WOUND
+			max_traumas = TRAUMA_LIMIT_SURGERY
 		if(TRAUMA_RESILIENCE_LOBOTOMY)
-			max_traumas = TRAUMA_LIMIT_LOBOTOMY
+			max_traumas = TRAUMA_LIMIT_SURGERY
 		if(TRAUMA_RESILIENCE_MAGIC)
-			max_traumas = TRAUMA_LIMIT_MAGIC
+			max_traumas = TRAUMA_LIMIT_SURGERY
 		if(TRAUMA_RESILIENCE_ABSOLUTE)
-			max_traumas = TRAUMA_LIMIT_ABSOLUTE
+			max_traumas = TRAUMA_LIMIT_SURGERY
 
 	if(natural_gain && resilience_tier_count >= max_traumas)
 		return FALSE

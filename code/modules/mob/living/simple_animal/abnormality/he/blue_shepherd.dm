@@ -52,6 +52,15 @@
 		/mob/living/simple_animal/hostile/abnormality/red_buddy = 5,
 	)
 
+	observation_prompt = "Got nothing better to do than to watch me? Anyway, while I'm lazing around... <br>\
+		The wolf is coming down the hill. <br>I'm the only one who can stop it, if you let me out I'll save you from the Wolf. <br>\
+		So, how about it?"
+	observation_choices = list(
+		"You're a liar" = list(TRUE, "Hmph. Sad ain't it? It only waits for me, I'm free to abandon it all I wish. <br>\
+			Lifeless things like that mutt and I don't deserve love but it'll wait for me all the same. <br>Does anyone wait for you?"),
+		"Release him" = list(FALSE, "Good choice, don't worry about the rest - I won't hurt them, pinky swear."),
+	)
+
 	var/death_counter //He won't go off a timer, he'll go off deaths. Takes 8 for him.
 	var/slash_current = 4
 	var/slash_cooldown = 4
@@ -196,12 +205,12 @@
 		hired = FALSE
 	return ..()
 
-/mob/living/simple_animal/hostile/abnormality/blue_shepherd/AttackingTarget()
+/mob/living/simple_animal/hostile/abnormality/blue_shepherd/AttackingTarget(atom/attacked_target)
 	. = ..()
 	if(client)
 		switch(chosen_attack)
 			if(1)
-				if(isliving(target))
+				if(isliving(attacked_target))
 					slash_current-=1
 				return OpenFire()
 			if(2)
@@ -215,7 +224,7 @@
 		slashing = TRUE
 		slash()
 	if(awakened_buddy)
-		awakened_buddy.GiveTarget(target)
+		awakened_buddy.GiveTarget(attacked_target)
 
 /mob/living/simple_animal/hostile/abnormality/blue_shepherd/OpenFire()
 	if(slash_current == 0)
@@ -248,7 +257,7 @@
 		slash_damage = 50
 		melee_damage_lower = 30
 		melee_damage_upper = 40
-		SpeedChange(-0.5)
+		ChangeMoveToDelayBy(-0.5)
 		maxHealth = maxHealth * 4 //5000 health, will get hurt by buddy's howl to make up for the high health
 		set_health(health * 4)
 		med_hud_set_health()
@@ -306,7 +315,7 @@
 				current_red.WatchIt()
 			all_turfs -= T
 			continue // Red doesn't get hit.
-		L.apply_damage(slash_damage, BLACK_DAMAGE, null, L.run_armor_check(null, BLACK_DAMAGE), spread_damage = TRUE)
+		L.deal_damage(slash_damage, BLACK_DAMAGE)
 		all_turfs -= T
 	if(slash_count >= range)
 		buddy_hit = FALSE
@@ -319,6 +328,8 @@
 	if(!ishuman(died))
 		return FALSE
 	if(!died.ckey)
+		return FALSE
+	if(died.z != z)
 		return FALSE
 	death_counter += 1
 	if(death_counter >= 2)
