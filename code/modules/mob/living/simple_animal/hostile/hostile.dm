@@ -1,5 +1,5 @@
 #define MAX_DAMAGE_SUFFERED 250
-
+GLOBAL_LIST_EMPTY(marked_players)
 /mob/living/simple_animal/hostile
 	faction = list("hostile")
 	stop_automated_movement_when_pulled = 0
@@ -81,12 +81,22 @@
 	var/patrol_move_timer = null
 
 	/// How willing a mob is to switch targets. More resistance means more aggro is required
-	var/target_switch_resistance
+	var/target_switch_resistance = 0
+
+	///tracking amount of queued DelayedTryAttack calls
+	var/delayed_attack_instances = 0
 
 	var/damage_effect_scale = 1
 
 	// Return to spawn point if target lost
 	var/return_to_origin = FALSE
+
+	//If the mob is a part of a faction
+	var/mark_once_attacked = FALSE
+	var/attacked_line = "You will pay for this!"
+	var/starting_looting_line = "Hand off, that is ours."
+	var/ending_looting_line = "That's it, you asked for this."
+	var/list/glob_faction = list()
 
 /mob/living/simple_animal/hostile/Initialize()
 	/*Update Speed overrides set speed and sets it
@@ -102,15 +112,69 @@
 	old_rapid_melee = rapid_melee
 	if(!targets_from)
 		targets_from = src
-	target_switch_resistance = clamp(maxHealth * 0.15, 100, 600)
+	target_switch_resistance = sqrt(maxHealth) * 2.5 //increases with maxHealth but not too much
 
 	wanted_objects = typecacheof(wanted_objects)
 
 	if (return_to_origin)
 		AddComponent(/datum/component/return_to_origin)
 
+	if(mark_once_attacked)
+		RegisterSignal(SSdcs, COMSIG_CRATE_LOOTING_STARTED, PROC_REF(on_seeing_looting_started))
+		RegisterSignal(SSdcs, COMSIG_CRATE_LOOTING_ENDED, PROC_REF(on_seeing_looting_ended))
+
+	glob_faction = GLOB.marked_players
+
+/mob/living/simple_animal/hostile/proc/on_seeing_looting_started(datum/source, mob/living/user, obj/crate)
+	SIGNAL_HANDLER
+	if (check_visible(user, crate) && stat != DEAD && !target)
+		addtimer(CALLBACK(src, PROC_REF(Talk)), 0)
+
+/mob/living/simple_animal/hostile/proc/on_seeing_looting_ended(datum/source, mob/living/user, obj/crate)
+	SIGNAL_HANDLER
+	if (check_visible(user, crate) && stat != DEAD && !target)
+		addtimer(CALLBACK(src, PROC_REF(Theif_Talk)), 0)
+		if (!(user in glob_faction))
+			glob_faction += user
+
+/mob/living/simple_animal/hostile/proc/Talk()
+	say(starting_looting_line)
+
+/mob/living/simple_animal/hostile/proc/Theif_Talk()
+	say(ending_looting_line)
+
+/mob/living/simple_animal/hostile/proc/check_visible(mob/living/user, obj/crate)
+	var/user_visible = (user in view(vision_range, src))
+	var/crate_visible = (crate in view(vision_range, src))
+	return user_visible && crate_visible
+
+/mob/living/simple_animal/hostile/bullet_act(obj/projectile/P)
+	. = ..()
+	if(mark_once_attacked)
+		if(P.firer && get_dist(src, P.firer) <= aggro_vision_range)
+			if(!ishostile(P.firer))
+				if (!(P.firer in glob_faction))
+					glob_faction += P.firer
+					say(attacked_line)
+
+/mob/living/simple_animal/hostile/attackby(obj/item/O, mob/user, params)
+	. = ..()
+	if(mark_once_attacked)
+		if(ishuman(user))
+			if (O.force > 0)
+				if (!(user in glob_faction ))
+					glob_faction += user
+					say(attacked_line)
+		else
+			if (!(user in glob_faction ))
+				glob_faction += user
+				say(attacked_line)
+
 /mob/living/simple_animal/hostile/Destroy()
 	targets_from = null
+	if(mark_once_attacked)
+		UnregisterSignal(SSdcs, COMSIG_CRATE_LOOTING_STARTED)
+		UnregisterSignal(SSdcs, COMSIG_CRATE_LOOTING_ENDED)
 	return ..()
 
 /mob/living/simple_animal/hostile/Life()
@@ -149,6 +213,8 @@
 	if(AICanContinue(possible_targets))
 		if(!attack_is_on_cooldown)
 			TryAttack()
+			if(QDELETED(src) || stat != CONSCIOUS)
+				return FALSE
 		if(!QDELETED(target) && !targets_from.Adjacent(target))
 			DestroyPathToTarget()
 		if(!MoveToTarget(possible_targets))     //if we lose our target
@@ -260,6 +326,7 @@
 
 /mob/living/simple_animal/hostile/death(gibbed)
 	target_memory.Cut()
+	attack_is_on_cooldown = FALSE
 	LoseTarget()
 	..(gibbed)
 
@@ -410,18 +477,21 @@
 	return speed + 2
 
 //////////////HOSTILE MOB TARGETTING AND AGGRESSION////////////
-
+///Gets a list of everything that can possibly be targeted
 /mob/living/simple_animal/hostile/proc/ListTargets(max_range = vision_range) //Step 1, find out what we can see
-	if(!search_objects)
-		. = hearers(max_range, targets_from) - src //Remove self, so we don't suicide
-
-		var/static/hostile_machines = typecacheof(list(/obj/machinery/porta_turret, /obj/vehicle/sealed/mecha))
-
-		for(var/obj/O in oview(max_range, targets_from))
-			if(is_type_in_typecache(O, hostile_machines))
-				. += O
-	else
+	//The thorough mode, rarely used
+	if(search_objects)
 		. = oview(max_range, targets_from)
+		return
+	//the standard mode
+	. = hearers(max_range, targets_from) - src //Remove self, so we don't suicide
+
+	var/turf/T = get_turf(targets_from)
+	for(var/i in GLOB.mechas_list)
+		var/obj/O = i
+		if(O.z == T.z && get_dist(T, O) <= max_range && can_see(T, O, max_range - 1) && CanAttack(O))
+			. += O
+	return
 
 /mob/living/simple_animal/hostile/proc/ListTargetsLazy(_Z)
 	var/static/hostile_machines = typecacheof(list(/obj/machinery/porta_turret, /obj/vehicle/sealed/mecha))
@@ -437,7 +507,7 @@
 /* ListTargets() is the radar ping that gets all creatures or things around us.
 	It is called routinely by handle_automated_action(). FindTarget() uses
 	this proc if it has no preset list in its proc.*/
-
+///Applies some conditions like CanAttack() to things from ListTargets() to only get a list of things we actually want to attack and then uses PickTarget() to select one.
 /mob/living/simple_animal/hostile/proc/FindTarget(list/possible_targets, HasTargetsList = 0)//Step 2, filter down possible targets to things we actually care about
 	. = list()
 	if(!HasTargetsList)
@@ -458,7 +528,7 @@
 
 /* Essentially is the middle part of FindTarget
 	but returns only a list without giving a target.*/
-/mob/living/simple_animal/hostile/proc/PossibleThreats(max_range = vision_range)
+/mob/living/simple_animal/hostile/proc/PossibleThreats(max_range = vision_range, consider_attack_condition = FALSE)
 	. = list()
 	for(var/pos_targ in ListTargets(max_range))
 		var/atom/A = pos_targ
@@ -466,8 +536,9 @@
 			. = list(A)
 			break
 		if(CanAttack(A))
-			. += A
-			continue
+			if(!consider_attack_condition || AttackCondition(A))
+				. += A
+				continue
 
 /* Returning True on this proc means
 	that only this target is listed and
@@ -480,7 +551,7 @@
 	that you override this for your mob instead of making
 	niche conditions. In some cases using Found() will suffice.*/
 /mob/living/simple_animal/hostile/CanAttack(atom/the_target)
-	if(isturf(the_target) || !the_target || the_target.type == /atom/movable/lighting_object)
+	if(isturf(the_target) || QDELETED(the_target) || the_target.type == /atom/movable/lighting_object)
 		// bail out on invalids
 		return FALSE
 
@@ -500,6 +571,10 @@
 			if(!L.CanBeAttacked(src))
 				return FALSE
 
+			if(mark_once_attacked)
+				if (the_target in glob_faction)
+					return TRUE
+
 			var/faction_check = faction_check_mob(L)
 			if(robust_searching)
 				if(faction_check && !attack_same)
@@ -515,6 +590,8 @@
 
 		if(ismecha(the_target))
 			var/obj/vehicle/sealed/mecha/M = the_target
+			if(M.resistance_flags & INDESTRUCTIBLE)
+				return FALSE
 			for(var/occupant in M.occupants)
 				if(CanAttack(occupant))
 					return TRUE
@@ -635,14 +712,17 @@
 		var/fraction_hp_lost_to_thing = min(target_memory[target_thing] / maxHealth, 1)
 		. += fraction_hp_lost_to_thing * 25
 
-/mob/living/simple_animal/hostile/proc/GiveTarget(new_target)
-	target = new_target
+/mob/living/simple_animal/hostile/proc/GiveTarget(atom/new_target)
 	target_memory.Cut()
-	target_memory[target] = 0
-	if(target != null)
+	if(!QDELETED(new_target))
+		target = new_target
+		target_memory[target] = 0
 		GainPatience()
 		Aggro()
-		return 1
+		Goto(target, move_to_delay, minimum_distance)
+		return TRUE
+	LoseTarget()
+	return FALSE
 
 /mob/living/simple_animal/hostile/proc/LoseTarget()
 	target = null
@@ -662,18 +742,6 @@
 	stop_automated_movement = 0
 	vision_range = initial(vision_range)
 	taunt_chance = initial(taunt_chance)
-
-//What we do after closing in
-/mob/living/simple_animal/hostile/proc/MeleeAction(patience = TRUE)
-	if(rapid_melee > 1)
-		var/datum/callback/cb = CALLBACK(src, PROC_REF(CheckAndAttack))
-		var/delay = SSnpcpool.wait / rapid_melee
-		for(var/i in 1 to rapid_melee)
-			addtimer(cb, (i - 1)*delay)
-	else
-		AttackingTarget()
-	if(patience)
-		GainPatience()
 
 /mob/living/simple_animal/hostile/proc/CheckAndAttack()
 	if(!target)
@@ -716,22 +784,34 @@
 		should_gain_patience = TRUE
 	else
 		in_melee = FALSE
-		var/list/targets_in_range = PossibleThreats(melee_reach)
+		var/list/targets_in_range = PossibleThreats(melee_reach, TRUE)
 		if(targets_in_range.len > 0)
 			//attack random thing in the list
 			attacked_target = pick(targets_in_range)
 
 	if(attacked_target)
+		//we have a target
+		if(!AttackCondition(attacked_target))
+			//not allowed to attack it
+			face_atom(attacked_target)
+			attack_is_on_cooldown = FALSE
+			if(delayed_attack_instances < 1)
+				DelayedTryAttack(attack_cooldown)
+			return
+		//attack it
 		attack_is_on_cooldown = TRUE
 		AttackingTarget(attacked_target)
+		//some AttackingTarget overloads sleep so this is needed
 		if(QDELETED(src) || stat != CONSCIOUS)
 			return
 		ResetAttackCooldown(attack_cooldown)
 		if(should_gain_patience)
 			GainPatience()
 	else
+		//nothing to attack try attack later
 		attack_is_on_cooldown = FALSE
-		DelayedTryAttack(attack_cooldown)
+		if(delayed_attack_instances < 1)
+			DelayedTryAttack(attack_cooldown)
 
 /mob/living/simple_animal/hostile/proc/ResetAttackCooldown(delay)
 	set waitfor = FALSE
@@ -741,9 +821,11 @@
 
 /mob/living/simple_animal/hostile/proc/DelayedTryAttack(delay)
 	set waitfor = FALSE
+	++delayed_attack_instances
 	SLEEP_CHECK_DEATH(delay)
 	if(!attack_is_on_cooldown)
 		TryAttack()
+	--delayed_attack_instances
 
 // Called by automated_action and causes the AI to go idle if it returns false. This proc is pretty big.
 /mob/living/simple_animal/hostile/proc/MoveToTarget(list/possible_targets)
@@ -753,17 +835,13 @@
 		target and if we are currently moving towards a
 		target and they suddenly or are currently something
 		we dont attack.*/
-	if(QDELETED(target))
+	if(QDELETED(target) || !CanAttack(target))
 		if(!FindTarget(possible_targets, TRUE))
 			if(approaching_target)
 				/* Approaching target means we are currently moving menacingly
 					towards something. Otherwise we are just moving and if we
 					are investigating a location we dont want to be told to stand still. */
 				LoseTarget()
-			return FALSE
-	if(!CanAttack(target))
-		if(!FindTarget(possible_targets, TRUE))
-			LoseTarget()
 			return FALSE
 	// The target we currently have is in our view and we must decide if we move towards it more.
 	if(target in possible_targets)
@@ -827,9 +905,16 @@
 		approaching_target = FALSE
 	walk_to(src, target, minimum_distance, delay)
 
+//Extra way to prevent attacking based on custom conditions, also used by ai to filter out secondary targets.
+//While CanTarget is more of a way to tell friend from foe, AttackCondition is about checking whether an attack can physically land.
+/mob/living/simple_animal/hostile/proc/AttackCondition(atom/attack_target)
+	return TRUE
+
 /mob/living/simple_animal/hostile/proc/AttackingTarget(atom/attacked_target)
 	if(!attacked_target)
 		attacked_target = target
+	if(!AttackCondition(attacked_target))
+		return
 	if(old_rapid_melee != rapid_melee)
 		attack_cooldown = SSnpcpool.wait / rapid_melee
 		old_rapid_melee = rapid_melee
@@ -845,6 +930,8 @@
 //////////////END HOSTILE MOB TARGETTING AND AGGRESSION////////////
 
 //Player firing and Player reach melee handling
+//Player click calls UnarmedAttack --> AttackingTarget when in 1 tile range; and RangedAttack for both long range melee and ranged attacks.
+
 /mob/living/simple_animal/hostile/RangedAttack(atom/A, params)
 	. = ..()
 	if(!client)

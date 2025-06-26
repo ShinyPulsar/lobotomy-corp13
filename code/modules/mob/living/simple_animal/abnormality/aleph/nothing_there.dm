@@ -34,6 +34,7 @@
 	)
 	work_damage_amount = 16
 	work_damage_type = RED_DAMAGE
+	chem_type = /datum/reagent/abnormality/sin/envy
 
 	ego_list = list(
 		/datum/ego_datum/weapon/mimicry,
@@ -61,7 +62,8 @@
 			It smiles. <br>No, it pretends to smile. <br>Who could be it?"),
 	)
 
-	var/mob/living/disguise = null
+	var/shelled
+	var/mob/living/disguise_ref
 	var/saved_appearance
 	var/can_act = TRUE
 	var/current_stage = 1
@@ -136,7 +138,7 @@
 	breachloop = new(list(src), FALSE)
 
 /mob/living/simple_animal/hostile/abnormality/nothing_there/Destroy()
-	TransferVar(1, heard_words)
+	TransferVar("mimicry", heard_words)
 	QDEL_NULL(soundloop)
 	QDEL_NULL(heartbeat)
 	QDEL_NULL(disguiseloop)
@@ -145,16 +147,11 @@
 
 /mob/living/simple_animal/hostile/abnormality/nothing_there/PostSpawn()
 	. = ..()
-	var/list/old_heard = RememberVar(1)
+	var/list/old_heard = RememberVar("mimicry")
 	if(islist(old_heard) && LAZYLEN(old_heard))
 		heard_words = old_heard
 	soundloop.start() // We only play the ambience if we're spawned in containment
 	return
-
-/mob/living/simple_animal/hostile/abnormality/nothing_there/examine(mob/user)
-	if(istype(disguise))
-		return disguise.examine(user)
-	return ..()
 
 /mob/living/simple_animal/hostile/abnormality/nothing_there/Move()
 	if(!can_act)
@@ -173,7 +170,7 @@
 		if((current_stage == 3) && (goodbye_cooldown <= world.time) && prob(35))
 			return Goodbye()
 		if((current_stage == 3) && (hello_cooldown <= world.time) && prob(35))
-			var/turf/target_turf = get_turf(target)
+			var/turf/target_turf = get_turf(attacked_target)
 			for(var/i = 1 to 3)
 				target_turf = get_step(target_turf, get_dir(get_turf(src), target_turf))
 			return Hello(target_turf)
@@ -198,13 +195,13 @@
 	return
 
 /mob/living/simple_animal/hostile/abnormality/nothing_there/ListTargets()
-	if(istype(disguise))
+	if(shelled)
 		return list()
 	return ..()
 
 /mob/living/simple_animal/hostile/abnormality/nothing_there/adjustHealth(amount, updating_health = TRUE, forced = FALSE)
 	. = ..()
-	if(istype(disguise) && (health < maxHealth * 0.95))
+	if((shelled) && (health < maxHealth * 0.95))
 		drop_disguise()
 
 /mob/living/simple_animal/hostile/abnormality/nothing_there/Life()
@@ -217,8 +214,8 @@
 			say(pick(speak_list))
 		return
 	if(.)
-		if(!isnull(disguise) && LAZYLEN(heard_words[disguise]) && prob(utterance*2))
-			speak_list = heard_words[disguise]
+		if((shelled) && LAZYLEN(heard_words[disguise_ref]) && prob(utterance*2))
+			speak_list = heard_words[disguise_ref]
 			say(pick(speak_list))
 		else
 			if(LAZYLEN(heard_words) && prob(utterance))
@@ -279,25 +276,24 @@
 	playsound(get_turf(src), 'sound/abnormalities/nothingthere/disguise.ogg', 75, 0, 5)
 	new /obj/effect/gibspawner/generic(get_turf(M))
 	to_chat(M, span_userdanger("Oh no..."))
-	disguise = M
-	// The following code makes it so that even if a disguised mob is resting, Nothing There's shell will still be standing up.
-	M.set_lying_angle(0)
-	M.set_body_position(STANDING_UP)
-	appearance = M.appearance
+	shelled = TRUE
+	CopyHumanAppearance(M) // This is the same proc used by Nobody Is for stealing skin. Should be less buggy than copying appearance var.
+	disguise_ref = M // We keep a reference to the "shell" for utterances and the like, but it's not absolutely necessary in case they gib somehow
 	M.death()
-	M.forceMove(src) // Hide them for examine message to work
+	M.forceMove(src) // Hide them
 	disguiseloop.start()
 	addtimer(CALLBACK(src, PROC_REF(ZeroQliphoth)), rand(20 SECONDS, 50 SECONDS))
 
 /mob/living/simple_animal/hostile/abnormality/nothing_there/proc/drop_disguise()
-	if(!istype(disguise))
+	if(!shelled)
 		return
 	next_transform = world.time + rand(30 SECONDS, 40 SECONDS)
 	ChangeMoveToDelayBy(1.5)
 	appearance = saved_appearance
-	disguise.forceMove(get_turf(src))
-	disguise.gib()
-	disguise = null
+	if(disguise_ref)
+		disguise_ref.forceMove(get_turf(src))
+		disguise_ref.gib()
+		disguise_ref = null
 	fear_level = ALEPH_LEVEL
 	FearEffect()
 	disguiseloop.stop()
@@ -386,7 +382,7 @@
 	can_act = TRUE
 
 /mob/living/simple_animal/hostile/abnormality/nothing_there/AttemptWork(mob/living/carbon/human/user, work_type)
-	if(istype(disguise))
+	if(shelled)
 		return FALSE
 	worker = user
 	var/growl_prob = (work_type in list(ABNORMALITY_WORK_REPRESSION, ABNORMALITY_WORK_INSIGHT)) ? 100 : 25
@@ -404,7 +400,7 @@
 /mob/living/simple_animal/hostile/abnormality/nothing_there/PostWorkEffect(mob/living/carbon/human/user, work_type, pe, work_time)
 	worker = null
 	if(get_attribute_level(user, JUSTICE_ATTRIBUTE) < 80)
-		if(!istype(disguise)) // Not work failure
+		if(!shelled) // Not work failure
 			datum_reference.qliphoth_change(-1)
 	return
 
@@ -420,7 +416,7 @@
 		return
 	. = ..()
 	soundloop.stop()
-	if(!istype(disguise))
+	if(!shelled)
 		next_transform = world.time + rand(30 SECONDS, 40 SECONDS)
 		playsound(get_turf(src), 'sound/abnormalities/nothingthere/breach.ogg', 50, 0, 5)
 		return

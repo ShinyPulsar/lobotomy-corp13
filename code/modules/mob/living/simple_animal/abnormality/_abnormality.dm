@@ -82,11 +82,7 @@
 	var/harvest_phrase_third = "%PERSON harvests... something... into %VESSEL."
 	// Dummy chemicals - called if chem_type is null.
 	var/list/dummy_chems = list(
-		/datum/reagent/abnormality/nutrition,
-		/datum/reagent/abnormality/cleanliness,
-		/datum/reagent/abnormality/consensus,
-		/datum/reagent/abnormality/amusement,
-		/datum/reagent/abnormality/violence,
+		/datum/reagent/abnormality/sin/emptiness,	//Set to a useless dummy chem rn. Should actually be replaced on every abno
 	)
 	// Increased Abno appearance chance
 	/// Assoc list, you do [path] = [probability_multiplier] for each entry
@@ -174,7 +170,7 @@
 	else
 		gift_message += "\nYou are granted a gift by [src]!"
 
-	if(secret_chance && (prob(1)))
+	if(secret_chance && (prob(1) || SSmaptype.chosen_trait == FACILITY_TRAIT_JOKE_ABNOS))
 		InitializeSecretIcon()
 
 	//Abnormalities have no name here. And we don't want nonsentient ones to breach
@@ -374,17 +370,18 @@
 	datum_reference.connected_structures[A] = list(x_offset, y_offset)
 	return A
 
-// transfers a var to the datum to be used later
-/mob/living/simple_animal/hostile/abnormality/proc/TransferVar(index, value)
+/* Transfers a var to the datum to be used later
+The variable's key needs to be non-numerical.*/
+/mob/living/simple_animal/hostile/abnormality/proc/TransferVar(key, value)
 	if(isnull(datum_reference))
 		return
-	LAZYSET(datum_reference.transferable_var, value, index)
+	LAZYSET(datum_reference.transferable_var, key, value)
 
 // Access an item in the "transferable_var" list of the abnormality's datum
-/mob/living/simple_animal/hostile/abnormality/proc/RememberVar(index)
+/mob/living/simple_animal/hostile/abnormality/proc/RememberVar(key)
 	if(isnull(datum_reference))
 		return
-	return LAZYACCESS(datum_reference.transferable_var, index)
+	return LAZYACCESS(datum_reference.transferable_var, key)
 
 // Modifiers for work chance
 /mob/living/simple_animal/hostile/abnormality/proc/WorkChance(mob/living/carbon/human/user, chance, work_type)
@@ -471,6 +468,9 @@
 	else // its a list, we gotta pick one
 		var/list/damage_types = work_damage_type
 		damage.icon_state = pick(damage_types)
+	var/damage_type = damage.icon_state
+	if(GLOB.damage_type_shuffler?.is_enabled && IsColorDamageType(damage_type))
+		damage.icon_state = GLOB.damage_type_shuffler.mapping_offense[damage_type]
 
 // Dictates whereas this type of work can be performed at the moment or not
 /mob/living/simple_animal/hostile/abnormality/proc/AttemptWork(mob/living/carbon/human/user, work_type)
@@ -588,6 +588,7 @@
 	C.icon_state = core_icon
 	C.contained_abno = src.type
 	C.threat_level = threat_level
+	C.ego_list += ego_list
 	switch(GetRiskLevel())
 		if(1)
 			return

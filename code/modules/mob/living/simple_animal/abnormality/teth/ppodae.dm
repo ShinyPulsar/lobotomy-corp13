@@ -22,6 +22,7 @@
 	)
 	work_damage_amount = 6
 	work_damage_type = RED_DAMAGE
+	chem_type = /datum/reagent/abnormality/sin/wrath
 	damage_coeff = list(RED_DAMAGE = 1.5, WHITE_DAMAGE = 0.8, BLACK_DAMAGE = 1, PALE_DAMAGE = 2)
 	can_breach = TRUE
 	start_qliphoth = 2
@@ -63,7 +64,7 @@
 	var/cute_resist_pale = 2
 	var/cute_speed = 1
 	//Other Stuff
-	var/limb_heal = 0.1
+	var/limb_heal = 0.02
 
 
 /mob/living/simple_animal/hostile/abnormality/ppodae/Login()
@@ -72,13 +73,13 @@
 		return FALSE
 	to_chat(src, "<h1>You are Ppodae, A Support/Combat Role Abnormality.</h1><br>\
 		<b>|How adorable!|: You are able to switch between a 'Cute' and 'Buff' form. \
-		Switching between forms has a 5 second cooldown and each time you switch forms you create smoke which lasts for 9 seconds.<br>\
+		Switching between forms has a 10 second cooldown and each time you switch forms you create smoke which lasts for 9 seconds.<br>\
 		<br>\
 		|Cute!|: While you are in your 'Cute' form, you have a MASSIVE speed boost and if you try to melee attack mechs or living mobs, you will crawl under them.<br>\
 		<br>\
 		|Strong!|: While you are in your 'Buff' form, you take 50% less damage from all attacks and you prefrom a 3x3 AoE attack when you try to melee attack, (Really good at breaking down Structures)<br>\
 		<br>\
-		|He's just Playing|: When you melee attack a unconscious or dead human body, you are able to tear off a limb, which heals you 10% of your max HP. (You can do this 4 time per body)</b>")
+		|He's just Playing|: When you melee attack a unconscious or dead human body, you are able to tear off a limb, which heals you 2% of your max HP. (You can do this 4 time per body)</b>")
 
 /datum/action/cooldown/ppodae_transform
 	name = "Transform!"
@@ -86,7 +87,7 @@
 	button_icon_state = "ppodae_transform"
 	check_flags = AB_CHECK_CONSCIOUS
 	transparent_when_unavailable = TRUE
-	cooldown_time = 5 SECONDS
+	cooldown_time = 12.5 SECONDS
 
 /datum/action/cooldown/ppodae_transform/Trigger()
 	if(!..())
@@ -131,32 +132,32 @@
 /mob/living/simple_animal/hostile/abnormality/ppodae/AttackingTarget(atom/attacked_target)
 	if(!can_act)
 		return FALSE
-	var/mob/living/carbon/L = target
+	var/mob/living/carbon/L = attacked_target
 	if(IsCombatMap())
-		if(iscarbon(target) && (L.stat == DEAD))
+		if(iscarbon(attacked_target) && (L.stat == DEAD))
 			LimbSteal(L)
 			return
 	else
-		if(iscarbon(target) && (L.health < 0 || L.stat == DEAD))
+		if(iscarbon(attacked_target) && (L.health < 0 || L.stat == DEAD))
 			LimbSteal(L)
 			return
 
 			// Taken from eldritch_demons.dm
 	if(IsCombatMap())
 		if(can_slam)
-			return Smash(target)
-		else if(isvehicle(target))
-			var/obj/vehicle/V = target
+			return Smash(attacked_target)
+		else if(isvehicle(attacked_target))
+			var/obj/vehicle/V = attacked_target
 			var/turf/target_turf = get_turf(V)
 			forceMove(target_turf)
 			manual_emote("crawls under [V]!")
-		else if (istype(target, /mob/living))
-			if (target != src)
-				var/turf/target_turf = get_turf(target)
+		else if (istype(attacked_target, /mob/living))
+			if (attacked_target != src)
+				var/turf/target_turf = get_turf(attacked_target)
 				forceMove(target_turf)
-				manual_emote("crawls under [target]!")
+				manual_emote("crawls under [attacked_target]!")
 	else
-		return Smash(target)
+		return Smash(attacked_target)
 
 /mob/living/simple_animal/hostile/abnormality/ppodae/proc/LimbSteal(mob/living/carbon/L)
 	if(HAS_TRAIT(L, TRAIT_NODISMEMBER))

@@ -44,7 +44,7 @@
 	var/seek_cooldown
 	var/seek_cooldown_time = 10 SECONDS
 	var/summon_group_size = 6
-	var/summon_maximum = 14
+	var/summon_maximum = 0
 	var/eat_threshold = 0.8
 	abnormality_origin = ABNORMALITY_ORIGIN_LOBOTOMY
 
@@ -97,7 +97,7 @@
 	. = ..()
 	if(protected_people.len)
 		FairyHeal()
-	if(summon_count > summon_maximum)
+	if(summon_count >= summon_maximum)
 		return
 	if((summon_cooldown < world.time) && !(status_flags & GODMODE))
 		SummonGuys(summon_type)
@@ -136,12 +136,13 @@
 /mob/living/simple_animal/hostile/abnormality/fairy_festival/BreachEffect(mob/living/carbon/human/user, breach_type)
 	if(breach_type == BREACH_PINK)
 		summon_cooldown_time = 20 SECONDS
+		summon_maximum = 15
 		SummonGuys(summon_type)
 	if(breach_type == BREACH_MINING)
 		can_breach = TRUE
 		summon_type = /mob/living/simple_animal/hostile/fairy_mass
 		summon_group_size = 1
-		summon_maximum = 3
+		summon_maximum = 4
 		SummonGuys(summon_type)
 		icon = 'ModularTegustation/Teguicons/96x48.dmi'
 		icon_state = "fairy_queen"
@@ -151,29 +152,29 @@
 		playsound(get_turf(src), "sound/abnormalities/fairyfestival/fairyqueen_growl.ogg", 100, FALSE)
 	return ..()
 
-/mob/living/simple_animal/hostile/abnormality/fairy_festival/AttackingTarget()
+/mob/living/simple_animal/hostile/abnormality/fairy_festival/AttackingTarget(atom/attacked_target)
 	. = ..()
 	if(summon_type != /mob/living/simple_animal/hostile/fairy_mass)//does she have fairy masses?
 		return
-	if(istype(target, /mob/living/simple_animal/hostile/fairy_mass))
-		var/mob/living/L = target
+	if(istype(attacked_target, /mob/living/simple_animal/hostile/fairy_mass))
+		var/mob/living/L = attacked_target
 		if(L.health > 0)//fairies have to be alive; scarred meat isn't tasty
 			L.gib()
 			ProcessKill()
 			playsound(get_turf(src), "sound/abnormalities/fairyfestival/fairyqueen_growl.ogg", 100, FALSE)
 			return
 		eat_threshold -= 0.2
-	if(. && isliving(target))
-		var/mob/living/L = target
-		if(isliving(target) && (L.health < 0 || L.stat == DEAD))
-			L.gib()
+	if(. && isliving(attacked_target))
+		var/mob/living/L = attacked_target
+		if(isliving(attacked_target) && (L.health < 0 || L.stat == DEAD))
 			playsound(get_turf(src), "sound/abnormalities/fairyfestival/fairyqueen_growl.ogg", 100, FALSE)
 			if(ishuman(L))
 				ProcessKill()
+			L.gib()
 
 //Cannibalism
 /mob/living/simple_animal/hostile/abnormality/fairy_festival/adjustHealth(amount, updating_health = TRUE, forced = FALSE)
-	..()
+	. = ..()
 	if(summon_type != /mob/living/simple_animal/hostile/fairy_mass)//does she have fairy masses?
 		return
 	if(health < (maxHealth * eat_threshold)) //80% health or lower, 20% less for each eat.
@@ -250,7 +251,7 @@
 /mob/living/simple_animal/hostile/mini_fairy/AttackingTarget(atom/attacked_target)
 	. = ..()
 	var/friends = 0
-	for(var/mob/living/simple_animal/hostile/mini_fairy/fren in view(6, src))
+	for(var/mob/living/simple_animal/hostile/mini_fairy/fren in ohearers(6, src))
 		friends++
 	if(friends < 3)
 		summon_backup()
@@ -296,10 +297,10 @@
 	stat_attack = DEAD
 	guaranteed_butcher_results = list(/obj/item/food/meat/slab = 1)
 
-/mob/living/simple_animal/hostile/fairy_mass/AttackingTarget()
+/mob/living/simple_animal/hostile/fairy_mass/AttackingTarget(atom/attacked_target)
 	. = ..()
-	if(iscarbon(target))
-		var/mob/living/L = target
+	if(iscarbon(attacked_target))
+		var/mob/living/L = attacked_target
 		if(L.health < 0 || L.stat == DEAD)
 			playsound(get_turf(src), 'sound/magic/demon_consume.ogg', 75, 0)
 			L.gib()

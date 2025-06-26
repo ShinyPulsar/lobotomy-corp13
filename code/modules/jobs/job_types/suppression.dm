@@ -15,6 +15,7 @@
 	access = list() // LC13:To-Do
 	minimal_access = list()
 
+	//You need DOs to spawn ERAs. All the mapexclude stuff is below.
 	allow_bureaucratic_error = FALSE
 	departments = DEPARTMENT_SECURITY
 
@@ -103,7 +104,7 @@
 	exp_requirements = 6000
 	exp_type = EXP_TYPE_CREW
 	exp_type_department = EXP_TYPE_SECURITY
-	mapexclude = list("wonderlabs", "mini")
+	mapexclude = list("wonderlabs", "mini", "lcorp_city", "enkephalin_rush")
 	job_important = "You are the Disciplinary Officer. Lead the Emergency Response Agents and other Disciplinary staff into combat."
 
 	job_abbreviation = "DO"
@@ -122,7 +123,6 @@
 	jobtype = /datum/job/suppression/captain
 	ears = /obj/item/radio/headset/heads/headset_discipline
 	l_pocket = /obj/item/commandprojector
-	suit = /obj/item/clothing/suit/armor/ego_gear/disc_off
 
 	backpack_contents = list(
 		/obj/item/melee/classic_baton,

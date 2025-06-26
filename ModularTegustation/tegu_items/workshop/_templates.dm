@@ -35,7 +35,7 @@
 	if(specialmod)
 		specialmod.ActivateEffect(src, special_count, target, user)
 	..()
-	if(target.stat != DEAD)
+	if(target.stat != DEAD || !istype(target, /mob/living/simple_animal/hostile/debugdummy))
 		weapon_xp++
 	force = true_force
 
@@ -44,6 +44,11 @@
 	if(istype(I, /obj/item/workshop_mod) && !active)
 		InstallMod(I , user)
 		return
+
+/obj/item/ego_weapon/template/attack_self(mob/living/user)
+	. = ..()
+	if (specialmod)
+		specialmod.Toggle()
 
 //Mod Installation Proc: Seperated from attackby so its easier to read and override.
 /obj/item/ego_weapon/template/proc/InstallMod(obj/item/workshop_mod/mod, mob/living/carbon/human/user)

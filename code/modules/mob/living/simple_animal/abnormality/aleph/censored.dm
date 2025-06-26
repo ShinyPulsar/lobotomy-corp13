@@ -35,6 +35,7 @@
 	)
 	work_damage_amount = 14
 	work_damage_type = BLACK_DAMAGE
+	chem_type = /datum/reagent/abnormality/sin/gluttony
 
 	ego_list = list(
 		/datum/ego_datum/weapon/censored,
@@ -285,6 +286,8 @@
 	pixel_x = base_pixel_x
 	base_pixel_y = rand(-6,6)
 	pixel_y = base_pixel_y
+	if(SSmaptype.maptype == "rcorp")
+		density = TRUE
 
 /mob/living/simple_animal/hostile/mini_censored/Life()
 	. = ..()

@@ -43,6 +43,7 @@
 	)
 	work_damage_amount = 10
 	work_damage_type = WHITE_DAMAGE
+	chem_type = /datum/reagent/abnormality/sin/wrath
 
 	ego_list = list(
 		/datum/ego_datum/weapon/warring,
@@ -101,11 +102,11 @@
 	new /obj/structure/tbird_perch(get_turf(src))
 
 //attempts to charge its target regardless of distance with a short cooldown. Can be spammed if distant enough.
-/mob/living/simple_animal/hostile/abnormality/thunder_bird/AttackingTarget()
+/mob/living/simple_animal/hostile/abnormality/thunder_bird/AttackingTarget(atom/attacked_target)
 	if(charging)
 		return
 	if(dash_cooldown <= world.time && prob(10) && !client)
-		thunder_bird_dash(target)
+		thunder_bird_dash(attacked_target)
 		return
 	return ..()
 
@@ -293,10 +294,12 @@
 	var/boom_damage = 50
 	layer = POINT_LAYER	//Sprite should always be visible
 	var/mob/living/simple_animal/hostile/abnormality/thunder_bird/master
+	var/duration = 3 SECONDS
+	var/range = 1
 
 /obj/effect/thunderbolt/Initialize()
 	. = ..()
-	addtimer(CALLBACK(src, PROC_REF(explode)), 3 SECONDS)
+	addtimer(CALLBACK(src, PROC_REF(Explode)), duration)
 
 //Zombie conversion through lightning bombs
 /obj/effect/thunderbolt/proc/Convert(mob/living/carbon/human/H)
@@ -314,13 +317,14 @@
 		C.name = "[H.real_name]"//applies the target's name and adds the name to its description
 		C.desc = "What appears to be [H.real_name], only charred and screaming incoherently..."
 		C.gender = H.gender
+		C.faction = master.faction
 		H.gib()
 	can_act = TRUE
 
 //Smaller Scorched Girl bomb
-/obj/effect/thunderbolt/proc/explode()
+/obj/effect/thunderbolt/proc/Explode()
 	playsound(get_turf(src), 'sound/abnormalities/thunderbird/tbird_bolt.ogg', 50, 0, 8)
-	var/list/turfs_to_check = view(1, src)
+	var/list/turfs_to_check = view(range, src)
 	for(var/mob/living/carbon/human/H in turfs_to_check)
 		H.deal_damage(boom_damage, BLACK_DAMAGE)
 		H.electrocute_act(1, src, flags = SHOCK_NOSTUN)
@@ -334,11 +338,12 @@
 	S.start()
 	qdel(src)
 
+
 /*--Zombies!--*/
 //zombie mob
 /mob/living/simple_animal/hostile/thunder_zombie
 	name = "Thunderbird Worshipper"
-	desc = "What appears to be human, only charred and screaming incoherently..."
+	desc = "An pitiable remnant of what was once human. Scalped, charred, and screaming incoherently..."
 	icon = 'ModularTegustation/Teguicons/32x32.dmi'
 	icon_state = "thunder_zombie"
 	icon_living = "thunder_zombie"

@@ -301,6 +301,9 @@
 	attack_verb_continuous = list("slams", "attacks")
 	attack_verb_simple = list("slam", "attack")
 	hitsound = 'sound/weapons/ego/hammer.ogg'
+	usesound = 'sound/weapons/ego/hammer.ogg'
+	toolspeed = 0.12
+	tool_behaviour = TOOL_MINING
 	attribute_requirements = list(
 							FORTITUDE_ATTRIBUTE = 80,
 							PRUDENCE_ATTRIBUTE = 100,
@@ -648,7 +651,7 @@
 		"Looks some sort of axe or bladed mace. An unbearable amount of heat comes off of it."),
 		"fall" = list(100, 1.2, 1, list("crushes", "burns"), list("crush", "burn"), 'sound/abnormalities/seasons/fall_attack.ogg', "autumnal equinox",BLACK_DAMAGE ,BLACK_DAMAGE,
 		"In nature, a light is often used as a simple but effective lure. This weapon follows the same premise."),
-		"winter" = list(60, 1.2, 2, list("skewers", "jabs"), list("skewer", "jab"), 'sound/abnormalities/seasons/winter_attack.ogg', "winter solstice",PALE_DAMAGE ,PALE_DAMAGE,
+		"winter" = list(80, 1, 2, list("skewers", "jabs"), list("skewer", "jab"), 'sound/abnormalities/seasons/winter_attack.ogg', "winter solstice",PALE_DAMAGE ,PALE_DAMAGE,
 		"This odd weapon is akin to the biting cold of the north.")
 		)
 	var/transforming = TRUE

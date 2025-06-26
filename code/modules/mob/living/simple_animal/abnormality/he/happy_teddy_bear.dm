@@ -20,6 +20,7 @@
 	)
 	work_damage_amount = 10
 	work_damage_type = WHITE_DAMAGE
+	chem_type = /datum/reagent/abnormality/sin/gloom
 	max_boxes = 15
 	response_help_continuous = "hugs" // :-)
 	response_help_simple = "hug"
@@ -32,6 +33,10 @@
 	)
 	gift_type =  /datum/ego_gifts/bearpaw
 	abnormality_origin = ABNORMALITY_ORIGIN_LOBOTOMY
+
+	grouped_abnos = list(
+		/mob/living/simple_animal/hostile/abnormality/hurting_teddy = 1.5,
+	)
 
 	observation_prompt = "Here lies a piece of rubbish, a teddy bear. <br>Its wool sticks out here and there. <br>\
 		The amount of dust piled up on it tells how long this teddy has been abandoned. <br>One of the buttons, which are eyes, is hanging loose."

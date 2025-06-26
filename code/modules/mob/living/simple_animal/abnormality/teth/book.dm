@@ -17,6 +17,7 @@
 	)
 	work_damage_amount = 6
 	work_damage_type = BLACK_DAMAGE
+	chem_type = /datum/reagent/abnormality/sin/pride
 
 	ego_list = list(
 		/datum/ego_datum/weapon/page,
@@ -111,7 +112,7 @@
 	. = ..()
 	if(!breaching)
 		return
-	if(summon_count > 15)
+	if(summon_count > 10)
 		qdel(src)
 		return
 	if((meltdown_cooldown < world.time) && !(status_flags & GODMODE))

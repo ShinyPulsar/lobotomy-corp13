@@ -25,6 +25,7 @@
 	melee_damage_lower = 5
 	melee_damage_upper = 15 // Idea taken from the old PR, have a large damage range to immitate its fucked rolls and crit chance.
 	melee_damage_type = BLACK_DAMAGE
+	chem_type = /datum/reagent/abnormality/sin/gluttony
 	stat_attack = HARD_CRIT
 	attack_sound = 'sound/abnormalities/drifting_fox/fox_melee_sound.ogg'
 	attack_verb_simple = "thwacks"
@@ -78,20 +79,37 @@
 	var/list/spawned_mobs = list()
 	var/initial_mobs_spawned
 
+/mob/living/simple_animal/hostile/abnormality/drifting_fox/Login()
+	. = ..()
+	to_chat(src, "<h1>You are Drifting Fox, A Combat Role Abnormality.</h1><br>\
+		<b>|Tattored Shelter|: After losing 10% of your health, you will start spawning Worn Umbrellas around you. \
+		Worn Umbrellas will teleport to you if you move too far away from them. \
+		Also, You will gain a slight speed boost for each Umbrella you have alive.<br>\
+		<br>\
+		|Worn Umbrellas|: Worn Umbrellas will passively attack humans that they can see by firing a 3x3 AoE on their targets. \
+		If the target gets hit by the AoE, They will gain a debuff which causes them to take more BLACK damage from all sources. \
+		However, if the umbrellas are broken you will lose 5% for each umbrella broken.<br></b>")
+
 /mob/living/simple_animal/hostile/abnormality/drifting_fox/funpet(mob/petter)
-	pet += petter
+	pet |= petter
 	return ..()
+
+/mob/living/simple_animal/hostile/abnormality/drifting_fox/AttemptWork(mob/living/carbon/human/user, work_type)
+	if(user in pet)
+		if(work_type == ABNORMALITY_WORK_ATTACHMENT)
+			to_chat(user, span_notice("The abnormality seems to like this type of work more than usual!"))
+		else
+			to_chat(user, span_warning("The abnormality does not seem happy with your choice of work."))
+	. = ..()
 
 /mob/living/simple_animal/hostile/abnormality/drifting_fox/WorkChance(mob/living/carbon/human/user, chance, work_type)
 	if(user in pet)
 		if(work_type == ABNORMALITY_WORK_ATTACHMENT)
 			chance += 30
-			pet -= user
-			to_chat(user, span_notice("The abnormality seems to like this type of work more than usual!"))
 		else
 			chance -= 10
-			to_chat(user, span_warning("The abnormality does not seem happy with your choice of work."))
 		return chance
+	. = ..()
 
 /mob/living/simple_animal/hostile/abnormality/drifting_fox/PostWorkEffect(mob/living/carbon/human/user, work_type, pe, work_time)
 	if(user in pet)
@@ -135,6 +153,7 @@
 			newmob.GoToFox()
 			newmob.ranged_cooldown_time = rand(20,80)
 			move_to_delay = clamp(move_to_delay - 1, 3, 7) //Speed up
+			UpdateSpeed()
 
 /mob/living/simple_animal/hostile/abnormality/drifting_fox/proc/UmbrellaLoop()
 	listclearnulls(spawned_mobs)
@@ -225,6 +244,8 @@
 	return FALSE
 
 /mob/living/simple_animal/hostile/umbrella/AttackingTarget(atom/attacked_target)
+	if(!target)
+		GiveTarget(attacked_target)
 	OpenFire()
 	return
 

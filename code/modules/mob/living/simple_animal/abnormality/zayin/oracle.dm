@@ -20,6 +20,7 @@
 	)
 	work_damage_amount = 5
 	work_damage_type = WHITE_DAMAGE
+	chem_type = /datum/reagent/abnormality/sin/wrath
 
 	ego_list = list(
 		/datum/ego_datum/weapon/dead_dream,
@@ -142,7 +143,7 @@
 			if(faction_check_mob(L))
 				continue
 			to_chat(L, span_userdanger("[chosenfake]"))
-		addtimer(CALLBACK(src, PROC_REF(NukeAttack)), 30 SECONDS)
+		addtimer(CALLBACK(src, PROC_REF(NukeAttack)), 60 SECONDS)
 	return ..()
 
 /mob/living/simple_animal/hostile/abnormality/oracle/proc/NukeAttack()

@@ -39,6 +39,9 @@
 	)
 	work_damage_amount = 10
 	work_damage_type = RED_DAMAGE
+	chem_type = /datum/reagent/abnormality/apex_predator
+	harvest_phrase = span_notice("A cloudy liquid leaks from %ABNO, stinking of burnt plastic. You collect it using %VESSEL.")
+	harvest_phrase_third = "%PERSON fills %VESSEL with a cloudy, foul smelling liquid that's leaking out of %ABNO."
 
 	ego_list = list(
 		/datum/ego_datum/weapon/animalism,
@@ -152,6 +155,8 @@
 			FindTarget()
 		else
 			if(!jumping)
+				if(!target)
+					GiveTarget(attacked_target)
 				Jump()
 		return
 	..()
@@ -216,3 +221,12 @@
 	jumping = FALSE
 	icon_state = "apex"
 	jump_cooldown = world.time + jump_cooldown_time
+
+/datum/reagent/abnormality/apex_predator
+	name = "Plasticine Anesthesia"
+	description = "A cloudy liquid that reeks of plastic. It weakens the mind while surturing physical wounds."
+	color = "#e4ebf5"
+	health_restore = 4
+	stat_changes = list(0, -15, 0, 0)
+	damage_mods = list(1, 1.5, 1, 1) //heals a lot but it severely weakens your purdence and white resistance
+
